@@ -55,6 +55,22 @@ window.bibliotecaFirebase = {
         return onAuthStateChanged(auth, callback);
     },
 
+    esperarSesion() {
+        return new Promise((resolve, reject) => {
+            const cancelarObservacion = onAuthStateChanged(
+                auth,
+                (usuario) => {
+                    cancelarObservacion();
+                    resolve(usuario);
+                },
+                (error) => {
+                    cancelarObservacion();
+                    reject(error);
+                }
+            );
+        });
+    },
+
     async leerColeccion(nombre) {
         validarColeccion(nombre);
         const snapshot = await get(ref(database, nombre));
