@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceso Docente - CTP Guácimo</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="login-body">
+    <main class="login-card">
+        <h2>Biblioteca CTP Guácimo</h2>
+        <span class="login-badge">Acceso para profesores</span>
+
+        <p class="form-hint">Las cuentas docentes son creadas por la administración. Solicita tu acceso antes de iniciar sesión.</p>
+
+        <form id="formInicioSesionProfesor" novalidate>
+            <div class="form-group">
+                <label for="correoInicioSesionProfesor">Correo electrónico:</label>
+                <input type="email" id="correoInicioSesionProfesor" maxlength="254" autocomplete="username" required>
+                <p id="errorUsuarioInicioSesionProfesor" class="form-message" aria-live="polite"></p>
+            </div>
+            <div class="form-group">
+                <label for="passwordInicioSesionProfesor">Contraseña:</label>
+                <input type="password" id="passwordInicioSesionProfesor" autocomplete="current-password" required>
+                <p id="errorPasswordInicioSesionProfesor" class="form-message" aria-live="polite"></p>
+            </div>
+            <p id="mensajeInicioSesionProfesor" class="form-message" aria-live="polite"></p>
+            <button id="enviarInicioSesionProfesor" type="submit" class="btn-submit">Iniciar sesión</button>
+        </form>
+
+        <a href="index.html" class="back-link">← Volver al inicio</a>
+    </main>
+    <script type="module" src="js/firebase.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
