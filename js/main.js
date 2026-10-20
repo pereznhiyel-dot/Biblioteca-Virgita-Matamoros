@@ -319,6 +319,14 @@ async function sincronizarDatosFirebase() {
     sincronizandoFirebase = true;
     actualizarEstadoFirebase('Conectando con Firebase...', 'conectando');
     try {
+        // Espera a que Firebase restaure la sesión para que las reglas reciban el UID docente.
+        if (document.getElementById('lista-lecturas')) {
+            const usuario = await cliente.esperarSesion();
+            if (!usuario) {
+                window.location.replace('inicio-secion-profesores.html');
+                return;
+            }
+        }
         const cargas = [
             cargarColeccionFirebase(CLAVE_RECURSOS),
             cargarColeccionFirebase(CLAVE_RESENAS)
@@ -334,9 +342,14 @@ async function sincronizarDatosFirebase() {
         renderizarCatalogoEstudiante();
         renderizarSugerenciasDocente();
     } catch (error) {
-        console.error('No se pudo leer Realtime Database.', error);
+        console.error('No se pudo sincronizar con Realtime Database.', error);
         firebaseDisponible = false;
-        actualizarEstadoFirebase('No se pudo conectar con Firebase; este panel usa el almacenamiento local. Revisa las reglas de Realtime Database.', 'error');
+        const detalle = `${error?.code || ''} ${error?.message || ''}`;
+        if (/PERMISSION_DENIED|permission-denied/i.test(detalle)) {
+            actualizarEstadoFirebase('Firebase denegó el acceso. Verifica que el UID de esta cuenta esté autorizado en todas las reglas de resources, reviews y suggestions.', 'error');
+        } else {
+            actualizarEstadoFirebase(`No se pudo sincronizar con Firebase${error?.code ? ` (${error.code})` : ''}; este panel usa el almacenamiento local. Revisa la conexión y las reglas de Realtime Database.`, 'error');
+        }
     } finally {
         sincronizandoFirebase = false;
     }
