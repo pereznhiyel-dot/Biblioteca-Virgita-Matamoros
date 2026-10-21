@@ -480,12 +480,21 @@ function inicializarGestionRecursos() {
     }
 
     const modal = document.getElementById('modalRecurso');
-    if (modal) {
+    if (modal && document.getElementById('formularioRecurso')) {
         modal.addEventListener('click', (event) => {
             if (event.target === modal) cerrarFormularioRecurso();
         });
         document.addEventListener('keydown', (event) => {
             if (event.key === 'Escape') cerrarFormularioRecurso();
+        });
+    }
+
+    if (modal && document.getElementById('modalTitulo')) {
+        modal.addEventListener('click', (event) => {
+            if (event.target === modal) cerrarModal();
+        });
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') cerrarModal();
         });
     }
 
@@ -835,6 +844,28 @@ function eliminarSugerencia(id) {
     if (!sugerencia || !window.confirm(`¿Eliminar la propuesta "${sugerencia.titulo}"?`)) return;
     guardarListaLocal(CLAVE_SUGERENCIAS, obtenerListaLocal(CLAVE_SUGERENCIAS).filter((elemento) => elemento.id !== id));
     renderizarSugerenciasDocente();
+}
+
+// Muestra la vista previa de un recurso en la página de inicio.
+function abrirModal(titulo, descripcion) {
+    const modal = document.getElementById('modalRecurso');
+    const tituloModal = document.getElementById('modalTitulo');
+    const descripcionModal = document.getElementById('modalDesc');
+    if (!modal || !tituloModal || !descripcionModal) return;
+
+    tituloModal.textContent = titulo;
+    descripcionModal.textContent = descripcion;
+    modal.classList.add('active');
+    modal.setAttribute('aria-hidden', 'false');
+    modal.querySelector('.close-modal')?.focus();
+}
+
+// Cierra la vista previa del recurso de la página de inicio.
+function cerrarModal() {
+    const modal = document.getElementById('modalRecurso');
+    if (!modal || !document.getElementById('modalTitulo')) return;
+    modal.classList.remove('active');
+    modal.setAttribute('aria-hidden', 'true');
 }
 
 // Prepara el formulario y las opiniones existentes antes de abrir el modal de reseñas.
