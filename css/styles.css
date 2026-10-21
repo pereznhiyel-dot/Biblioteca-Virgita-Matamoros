@@ -322,6 +322,9 @@ re-icon {
     position: absolute;
     top: 0.5rem;
     right: 0.9rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
     color: var(--text-secondary);
     font-size: 1.8rem;
     cursor: pointer;
