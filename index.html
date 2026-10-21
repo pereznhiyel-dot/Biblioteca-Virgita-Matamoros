@@ -130,9 +130,9 @@
     </main>
 
     <!-- Modal Emergente de Vista Previa -->
-    <div id="modalRecurso" class="modal">
-        <div class="modal-content">
-            <span class="close-modal" onclick="cerrarModal()">&times;</span>
+    <div id="modalRecurso" class="modal" aria-hidden="true">
+        <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modalTitulo">
+            <button class="close-modal" type="button" aria-label="Cerrar" onclick="cerrarModal()">&times;</button>
             <h3 id="modalTitulo">Título</h3>
             <p id="modalDesc" style="margin-top: 0.8rem; color: var(--text-secondary);"></p>
             <p style="margin-top: 1.2rem; font-size: 0.85rem; color: var(--accent-color); font-weight: bold;">
