@@ -4,7 +4,7 @@ Esta es una página para la biblioteca del colegio, esta tiene fusiones para pod
 # ¿Como accedo como profesor?
 primero tienes que mandar un correo al Gmail de la biblioteca: bibliotecavirgita@gmail.com.
 
-Para que pueda ser añadido nos tienes que enviar estos datos: el correo GMAIL que vas a usar y la contraseña
+Para que pueda ser añadido nos tienes que enviar estos datos: el correo GMAIL que vas a usar y la contraseña + su nombre y la asignatura que das
 >se prefiere que el correo sea del mep de profesores, ya que los normales tendran que ser revisados con mas tiempo
 
 >La contraseña tiene que ser una fuerte, con minúsculas, mayúsculas y caracteres especiales: "#$$&@"?¿¿"
