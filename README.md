@@ -2,7 +2,7 @@
 Esta es una página para la biblioteca del colegio, esta tiene fusiones para poder ver videos educativos, leer, y jugar juegos de mesa, esta tiene un control bastante estricto a la hora de iniciar como profesor y uno bastante simple para los estudiantes.
 
 # ¿Como accedo como profesor?
-primero tienes que mandar un correo al Gmail de la biblioteca: "Aqui va el correo".
+primero tienes que mandar un correo al Gmail de la biblioteca: bibliotecavirgita@gmail.com.
 
 Para que pueda ser añadido nos tienes que enviar estos datos: el correo GMAIL que vas a usar y la contraseña
 >se prefiere que el correo sea del mep de profesores, ya que los normales tendran que ser revisados con mas tiempo
