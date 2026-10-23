@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portal Estudiante - CTP Guácimo</title>
+    <script>
+        if (localStorage.getItem('bibliotecaTemaEstudiante') === 'dark') {
+            document.documentElement.dataset.theme = 'dark';
+        }
+    </script>
     <!-- Estilos de la aplicación -->
     <link rel="stylesheet" href="css/styles.css">
     <script src="https://unpkg.com/reicon/cdn/reicon.js" defer></script>
@@ -15,8 +20,10 @@
         <div class="banner-frase">
             <h1 id="mensajeBienvenida">Bienvenido/a Estudiante</h1>
         </div>
-        <!-- Botón para cerrar sesión y volver al index -->
-        <button id="btnCerrarSesion" class="select-ingreso">Cerrar Sesión</button>
+        <div class="student-header-actions">
+            <button id="btnCambiarTemaEstudiante" class="theme-toggle" type="button" aria-pressed="false">Activar modo oscuro</button>
+            <button id="btnCerrarSesion" class="select-ingreso" type="button">Cerrar Sesión</button>
+        </div>
     </header>
 
     <!-- Menú Banner de Navegación entre secciones -->
