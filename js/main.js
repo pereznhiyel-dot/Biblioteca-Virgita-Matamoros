@@ -13,13 +13,15 @@ const RECURSOS_INICIALES = [
 const CLAVE_RECURSOS = 'bibliotecaRecursos';
 const CLAVE_RESENAS = 'bibliotecaResenas';
 const CLAVE_SUGERENCIAS = 'bibliotecaSugerencias';
+const CLAVE_CATEGORIAS = 'bibliotecaCategorias';
 const COLECCIONES_FIREBASE = {
     [CLAVE_RECURSOS]: 'resources',
     [CLAVE_RESENAS]: 'reviews',
-    [CLAVE_SUGERENCIAS]: 'suggestions'
+    [CLAVE_SUGERENCIAS]: 'suggestions',
+    [CLAVE_CATEGORIAS]: 'categories'
 };
 // Recuerda los IDs remotos para poder detectar registros eliminados al sincronizar.
-const IDS_FIREBASE = { resources: new Set(), reviews: new Set(), suggestions: new Set() };
+const IDS_FIREBASE = { resources: new Set(), reviews: new Set(), suggestions: new Set(), categories: new Set() };
 let firebaseDisponible = false;
 let sincronizandoFirebase = false;
 
@@ -195,6 +197,97 @@ function guardarRecursos(recursos) {
     void sincronizarColeccionFirebase(CLAVE_RECURSOS, recursos);
 }
 
+function obtenerCategorias() {
+    const guardadas = localStorage.getItem(CLAVE_CATEGORIAS);
+    if (!guardadas) return [];
+    try {
+        const categorias = JSON.parse(guardadas);
+        return Array.isArray(categorias) ? categorias : [];
+    } catch (error) {
+        console.error('No se pudieron leer las categorías guardadas en este navegador.', error);
+        localStorage.removeItem(CLAVE_CATEGORIAS);
+        return [];
+    }
+}
+
+function guardarCategorias(categorias) {
+    localStorage.setItem(CLAVE_CATEGORIAS, JSON.stringify(categorias));
+    void sincronizarColeccionFirebase(CLAVE_CATEGORIAS, categorias);
+}
+
+function obtenerCategoriaRecurso(recurso) {
+    const categoria = obtenerCategorias().find((item) => item.id === recurso.categoriaId);
+    return categoria
+        ? { nombre: categoria.nombre, icono: categoria.icono || '' }
+        : { nombre: recurso.categoria || '', icono: '' };
+}
+
+function renderizarEtiquetaCategoria(recurso, clase = '') {
+    const categoria = obtenerCategoriaRecurso(recurso);
+    const texto = escaparHTML(categoria.nombre || 'Sin categoría');
+    const icono = /^[a-z0-9-]+$/i.test(categoria.icono)
+        ? `<re-icon icon="${escaparHTML(categoria.icono)}" size="15" aria-hidden="true"></re-icon>`
+        : '';
+    return `<span class="categoria-tag${clase ? ` ${clase}` : ''}">${icono}${texto}</span>`;
+}
+
+function valorCategoriaRecurso(recurso) {
+    if (recurso.categoriaId && obtenerCategorias().some((item) => item.id === recurso.categoriaId)) {
+        return recurso.categoriaId;
+    }
+    return recurso.categoria ? `legacy:${recurso.categoria}` : '__sin_categoria__';
+}
+
+function recursosCoincidenConFiltro(recursos, tipo) {
+    const filtro = document.querySelector(`[data-filtro-categoria="${tipo}"]`)?.value || '';
+    if (!filtro) return recursos;
+    return recursos.filter((recurso) => valorCategoriaRecurso(recurso) === filtro);
+}
+
+function actualizarSelectoresCategorias() {
+    const categorias = obtenerCategorias().sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+    const recursos = obtenerRecursos();
+    document.querySelectorAll('[data-filtro-categoria]').forEach((select) => {
+        const seleccion = select.value;
+        const tipo = select.dataset.filtroCategoria;
+        const valores = new Map();
+        const categoriasUsadas = new Set(
+            recursos.filter((recurso) => recurso.tipo === tipo).map((recurso) => recurso.categoriaId)
+        );
+        categorias.filter((categoria) => categoriasUsadas.has(categoria.id))
+            .forEach((categoria) => valores.set(categoria.id, categoria.nombre));
+        recursos.filter((recurso) => recurso.tipo === tipo && recurso.categoria && !recurso.categoriaId)
+            .forEach((recurso) => valores.set(`legacy:${recurso.categoria}`, recurso.categoria));
+        const categoriasSinAsignar = recursos.some((recurso) =>
+            recurso.tipo === tipo && !recurso.categoria && !recurso.categoriaId
+        );
+        select.innerHTML = '<option value="">Todas las categorías</option>'
+            + [...valores].map(([id, nombre]) =>
+                `<option value="${escaparHTML(id)}">${escaparHTML(nombre)}</option>`
+            ).join('')
+            + (categoriasSinAsignar ? '<option value="__sin_categoria__">Sin categoría</option>' : '');
+        if ([...select.options].some((option) => option.value === seleccion)) select.value = seleccion;
+    });
+
+    const selectorRecurso = document.getElementById('recursoCategoria');
+    if (selectorRecurso) {
+        const seleccionado = selectorRecurso.value;
+        selectorRecurso.innerHTML = '<option value="">Sin categoría</option>'
+            + categorias.map((categoria) =>
+                `<option value="${escaparHTML(categoria.id)}">${escaparHTML(categoria.nombre)}</option>`
+            ).join('');
+        if ([...selectorRecurso.options].some((option) => option.value === seleccionado)) {
+            selectorRecurso.value = seleccionado;
+        }
+    }
+}
+
+function crearIdCategoria(nombre) {
+    const slug = nombre.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'categoria';
+    return `cat-${slug}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+}
+
 // Codifica caracteres especiales para insertar texto de usuario de forma segura en HTML.
 function escaparHTML(valor = '') {
     return String(valor).replace(/[&<>"']/g, (caracter) => ({
@@ -329,7 +422,8 @@ async function sincronizarDatosFirebase() {
         }
         const cargas = [
             cargarColeccionFirebase(CLAVE_RECURSOS),
-            cargarColeccionFirebase(CLAVE_RESENAS)
+            cargarColeccionFirebase(CLAVE_RESENAS),
+            cargarColeccionFirebase(CLAVE_CATEGORIAS)
         ];
         // Las propuestas incluyen datos de estudiantes y solo se necesitan en el panel docente.
         if (document.getElementById('lista-sugerencias')) {
@@ -337,6 +431,7 @@ async function sincronizarDatosFirebase() {
         }
         await Promise.all(cargas);
         firebaseDisponible = true;
+        if (document.getElementById('lista-sugerencias')) migrarCategoriasLegadas();
         actualizarEstadoFirebase('Conectado a Firebase · catálogo sincronizado', 'conectado');
         renderizarCatalogoDocente();
         renderizarCatalogoEstudiante();
@@ -346,13 +441,44 @@ async function sincronizarDatosFirebase() {
         firebaseDisponible = false;
         const detalle = `${error?.code || ''} ${error?.message || ''}`;
         if (/PERMISSION_DENIED|permission-denied/i.test(detalle)) {
-            actualizarEstadoFirebase('Firebase denegó el acceso. Verifica que el UID de esta cuenta esté autorizado en todas las reglas de resources, reviews y suggestions.', 'error');
+            actualizarEstadoFirebase('Firebase denegó el acceso. Publica las reglas actualizadas de resources, reviews, suggestions y categories, y verifica la autorización del UID docente.', 'error');
         } else {
             actualizarEstadoFirebase(`No se pudo sincronizar con Firebase${error?.code ? ` (${error.code})` : ''}; este panel usa el almacenamiento local. Revisa la conexión y las reglas de Realtime Database.`, 'error');
         }
     } finally {
         sincronizandoFirebase = false;
     }
+}
+
+function migrarCategoriasLegadas() {
+    const categorias = obtenerCategorias();
+    const recursos = obtenerRecursos();
+    const nombres = new Map(categorias.map((categoria) => [categoria.nombre.toLocaleLowerCase(), categoria]));
+    let categoriasActualizadas = false;
+    let recursosActualizados = false;
+
+    recursos.filter((recurso) =>
+        ['lecturas', 'videos'].includes(recurso.tipo) && recurso.categoria && !recurso.categoriaId
+    ).forEach((recurso) => {
+        const clave = recurso.categoria.trim().toLocaleLowerCase();
+        let categoria = nombres.get(clave);
+        if (!categoria) {
+            categoria = {
+                id: crearIdCategoria(recurso.categoria.trim()),
+                nombre: recurso.categoria.trim(),
+                icono: ''
+            };
+            categorias.push(categoria);
+            nombres.set(clave, categoria);
+            categoriasActualizadas = true;
+        }
+        recurso.categoriaId = categoria.id;
+        recurso.categoria = categoria.nombre;
+        recursosActualizados = true;
+    });
+
+    if (categoriasActualizadas) guardarCategorias(categorias);
+    if (recursosActualizados) guardarRecursos(recursos);
 }
 
 // Crea el reproductor apropiado para videos directos o enlaces de YouTube y Vimeo.
@@ -426,6 +552,8 @@ function inicializarGestionRecursos() {
     if (!tipos.some((tipo) => document.getElementById(`lista-${tipo}`) || document.getElementById(`lista-estudiante-${tipo}`))) return;
 
     obtenerRecursos();
+    obtenerCategorias();
+    actualizarSelectoresCategorias();
     renderizarCatalogoDocente();
     renderizarCatalogoEstudiante();
 
@@ -446,6 +574,25 @@ function inicializarGestionRecursos() {
     if (formulario) {
         formulario.addEventListener('submit', guardarRecursoDesdeFormulario);
         document.getElementById('origenLectura').addEventListener('change', actualizarAyudaOrigenLectura);
+    }
+
+    document.querySelectorAll('[data-filtro-categoria]').forEach((selector) => {
+        selector.addEventListener('change', () => {
+            renderizarCatalogoDocente();
+            renderizarCatalogoEstudiante();
+        });
+    });
+
+    const formularioCategoria = document.getElementById('formularioCategoria');
+    if (formularioCategoria) {
+        formularioCategoria.addEventListener('submit', guardarCategoriaDesdeFormulario);
+        const listaCategorias = document.getElementById('listaCategorias');
+        listaCategorias.addEventListener('click', (event) => {
+            const boton = event.target.closest('[data-accion-categoria]');
+            if (!boton) return;
+            if (boton.dataset.accionCategoria === 'editar') editarCategoria(boton.dataset.id);
+            if (boton.dataset.accionCategoria === 'eliminar') eliminarCategoria(boton.dataset.id);
+        });
     }
 
     const formularioSugerencia = document.getElementById('formularioSugerencia');
@@ -489,6 +636,16 @@ function inicializarGestionRecursos() {
         });
     }
 
+    const modalCategorias = document.getElementById('modalCategorias');
+    if (modalCategorias) {
+        modalCategorias.addEventListener('click', (event) => {
+            if (event.target === modalCategorias) cerrarGestionCategorias();
+        });
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') cerrarGestionCategorias();
+        });
+    }
+
     if (modal && document.getElementById('modalTitulo')) {
         modal.addEventListener('click', (event) => {
             if (event.target === modal) cerrarModal();
@@ -515,25 +672,26 @@ function inicializarGestionRecursos() {
 function renderizarCatalogoDocente() {
     const recursos = obtenerRecursos();
     const etiquetas = { lecturas: 'Lectura', videos: 'Video', juegos: 'Juego' };
+    actualizarSelectoresCategorias();
 
     ['lecturas', 'videos', 'juegos'].forEach((tipo) => {
         const lista = document.getElementById(`lista-${tipo}`);
         if (!lista) return;
-        const delTipo = recursos.filter((recurso) => recurso.tipo === tipo);
+        const delTipo = recursosCoincidenConFiltro(recursos.filter((recurso) => recurso.tipo === tipo), tipo);
         lista.innerHTML = delTipo.length ? delTipo.map((recurso) => {
             const id = escaparHTML(recurso.id);
             const titulo = escaparHTML(recurso.titulo);
-            const categoria = escaparHTML(recurso.categoria || etiquetas[tipo]);
+            const etiqueta = renderizarEtiquetaCategoria(recurso, tipo === 'juegos' ? 'juego' : '');
             const descripcion = escaparHTML(recurso.descripcion);
             const imagen = urlSegura(recurso.imagen) || 'https://picsum.photos/640/420?grayscale';
             const controles = `<div class="resource-actions"><button class="secondary-button" type="button" data-accion-recurso="editar" data-tipo="${tipo}" data-id="${id}">Editar</button><button class="delete-button" type="button" data-accion-recurso="eliminar" data-id="${id}">Eliminar</button></div>`;
             const opiniones = crearOpinionesHTML(recurso.id);
 
             if (tipo === 'videos') {
-                return `<article class="yt-card management-card"><div class="video-player">${crearReproductorVideo(recurso.url, recurso.titulo)}</div><div class="yt-details"><span class="categoria-tag">${categoria}</span><h3>${titulo}</h3><p class="yt-canal">${descripcion}</p>${opiniones}${controles}</div></article>`;
+                return `<article class="yt-card management-card"><div class="video-player">${crearReproductorVideo(recurso.url, recurso.titulo)}</div><div class="yt-details">${etiqueta}<h3>${titulo}</h3><p class="yt-canal">${descripcion || escaparHTML(etiquetas[tipo])}</p>${opiniones}${controles}</div></article>`;
             }
 
-            return `<article class="card-libro management-card"><img src="${escaparHTML(imagen)}" alt="Imagen de ${titulo}"><div class="card-libro-info"><span class="categoria-tag${tipo === 'juegos' ? ' juego' : ''}">${categoria}</span><h3>${titulo}</h3><p>${descripcion}</p>${opiniones}${controles}</div></article>`;
+            return `<article class="card-libro management-card"><img src="${escaparHTML(imagen)}" alt="Imagen de ${titulo}"><div class="card-libro-info">${etiqueta}<h3>${titulo}</h3><p>${descripcion}</p>${opiniones}${controles}</div></article>`;
         }).join('') : '<p class="empty-state">Todavía no hay recursos en esta sección.</p>';
     });
 
@@ -551,28 +709,146 @@ function renderizarCatalogoDocente() {
 // Dibuja para estudiantes los recursos publicados, con sus enlaces y reseñas.
 function renderizarCatalogoEstudiante() {
     const recursos = obtenerRecursos();
+    actualizarSelectoresCategorias();
     ['lecturas', 'videos', 'juegos'].forEach((tipo) => {
         const lista = document.getElementById(`lista-estudiante-${tipo}`);
         if (!lista) return;
-        const delTipo = recursos.filter((recurso) => recurso.tipo === tipo);
+        const delTipo = recursosCoincidenConFiltro(recursos.filter((recurso) => recurso.tipo === tipo), tipo);
         lista.innerHTML = delTipo.length ? delTipo.map((recurso) => {
             const titulo = escaparHTML(recurso.titulo);
-            const categoria = escaparHTML(recurso.categoria || 'Recurso educativo');
+            const etiqueta = renderizarEtiquetaCategoria(recurso, tipo === 'juegos' ? 'juego' : '');
+            const categoria = escaparHTML(obtenerCategoriaRecurso(recurso).nombre || 'Recurso educativo');
             const descripcion = escaparHTML(recurso.descripcion);
             const imagen = urlSegura(recurso.imagen) || 'https://picsum.photos/640/420?grayscale';
             const url = escaparHTML(urlSegura(recurso.url));
             const opiniones = crearOpinionesHTML(recurso.id, true);
 
             if (tipo === 'videos') {
-                return `<article class="yt-card"><div class="video-player">${crearReproductorVideo(recurso.url, recurso.titulo)}</div><div class="yt-details"><h3>${titulo}</h3><p class="yt-canal">${categoria} · ${descripcion}</p>${opiniones}</div></article>`;
+                return `<article class="yt-card"><div class="video-player">${crearReproductorVideo(recurso.url, recurso.titulo)}</div><div class="yt-details">${etiqueta}<h3>${titulo}</h3><p class="yt-canal">${descripcion}</p>${opiniones}</div></article>`;
             }
 
             const esJuego = tipo === 'juegos';
             const icono = esJuego ? 'gamepad' : 'book-open';
             const textoAccion = esJuego ? 'Jugar ahora' : esEnlaceDrive(recurso.url) ? 'Abrir en Drive' : 'Abrir lectura';
-            return `<article class="card-libro"><img src="${imagen}" alt="Imagen de ${titulo}"><div class="card-libro-info"><span class="categoria-tag${esJuego ? ' juego' : ''}">${categoria}</span><h3>${titulo}</h3><p>${descripcion}</p>${opiniones}<a class="btn-leer" href="${url}" target="_blank" rel="noopener noreferrer"><re-icon icon="${icono}" size="18" aria-hidden="true"></re-icon>${textoAccion}</a></div></article>`;
+            return `<article class="card-libro"><img src="${imagen}" alt="Imagen de ${titulo}"><div class="card-libro-info">${etiqueta}<h3>${titulo}</h3><p>${descripcion || categoria}</p>${opiniones}<a class="btn-leer" href="${url}" target="_blank" rel="noopener noreferrer"><re-icon icon="${icono}" size="18" aria-hidden="true"></re-icon>${textoAccion}</a></div></article>`;
         }).join('') : '<p class="empty-state">No hay recursos publicados en esta sección todavía.</p>';
     });
+}
+
+function abrirGestionCategorias() {
+    const modal = document.getElementById('modalCategorias');
+    if (!modal) return;
+    cancelarEdicionCategoria();
+    renderizarListaCategorias();
+    modal.classList.add('active');
+    modal.setAttribute('aria-hidden', 'false');
+    document.getElementById('categoriaNombre').focus();
+}
+
+function cerrarGestionCategorias() {
+    const modal = document.getElementById('modalCategorias');
+    if (!modal) return;
+    modal.classList.remove('active');
+    modal.setAttribute('aria-hidden', 'true');
+}
+
+function renderizarListaCategorias() {
+    const lista = document.getElementById('listaCategorias');
+    if (!lista) return;
+    const categorias = obtenerCategorias().sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+    lista.innerHTML = categorias.length ? categorias.map((categoria) => {
+        const iconoValido = /^[a-z0-9-]+$/i.test(categoria.icono || '');
+        const icono = iconoValido
+            ? `<re-icon icon="${escaparHTML(categoria.icono)}" size="18" aria-hidden="true"></re-icon>`
+            : '<re-icon icon="folder" size="18" aria-hidden="true"></re-icon>';
+        return `<article class="category-manager-item"><span class="category-manager-name">${icono}${escaparHTML(categoria.nombre)}</span><div class="resource-actions"><button class="secondary-button" type="button" data-accion-categoria="editar" data-id="${escaparHTML(categoria.id)}">Editar</button><button class="delete-button" type="button" data-accion-categoria="eliminar" data-id="${escaparHTML(categoria.id)}">Eliminar</button></div></article>`;
+    }).join('') : '<p class="empty-state">Todavía no hay categorías. Crea la primera con el formulario.</p>';
+}
+
+function cancelarEdicionCategoria() {
+    const formulario = document.getElementById('formularioCategoria');
+    if (!formulario) return;
+    formulario.reset();
+    document.getElementById('categoriaId').value = '';
+    document.getElementById('mensajeCategoria').textContent = '';
+    document.getElementById('cancelarEdicionCategoria').hidden = true;
+}
+
+function editarCategoria(id) {
+    const categoria = obtenerCategorias().find((item) => item.id === id);
+    if (!categoria) return;
+    document.getElementById('categoriaId').value = categoria.id;
+    document.getElementById('categoriaNombre').value = categoria.nombre;
+    document.getElementById('categoriaIcono').value = categoria.icono || '';
+    document.getElementById('mensajeCategoria').textContent = '';
+    document.getElementById('cancelarEdicionCategoria').hidden = false;
+    document.getElementById('categoriaNombre').focus();
+}
+
+function guardarCategoriaDesdeFormulario(event) {
+    event.preventDefault();
+    const id = document.getElementById('categoriaId').value;
+    const nombre = document.getElementById('categoriaNombre').value.trim();
+    const iconoIngresado = document.getElementById('categoriaIcono').value.trim();
+    const mensaje = document.getElementById('mensajeCategoria');
+    const categorias = obtenerCategorias();
+    const existente = categorias.find((categoria) => categoria.id === id);
+
+    if (!nombre) {
+        mensaje.textContent = 'Escribe el nombre de la categoría.';
+        return;
+    }
+    if (iconoIngresado && !/^[a-z0-9-]+$/i.test(iconoIngresado)) {
+        mensaje.textContent = 'El icono solo puede contener letras, números y guiones.';
+        return;
+    }
+    if (categorias.some((categoria) =>
+        categoria.id !== id && categoria.nombre.trim().toLocaleLowerCase() === nombre.toLocaleLowerCase()
+    )) {
+        mensaje.textContent = 'Ya existe una categoría con ese nombre.';
+        return;
+    }
+
+    const categoria = {
+        id: existente?.id || crearIdCategoria(nombre),
+        nombre,
+        icono: iconoIngresado || existente?.icono || ''
+    };
+    if (existente) {
+        const recursos = obtenerRecursos();
+        recursos.forEach((recurso) => {
+            if (recurso.categoriaId === existente.id) recurso.categoria = nombre;
+        });
+        guardarRecursos(recursos);
+        categorias[categorias.indexOf(existente)] = categoria;
+    } else {
+        categorias.push(categoria);
+    }
+    guardarCategorias(categorias);
+    actualizarSelectoresCategorias();
+    renderizarListaCategorias();
+    renderizarCatalogoDocente();
+    renderizarCatalogoEstudiante();
+    cancelarEdicionCategoria();
+}
+
+function eliminarCategoria(id) {
+    const categoria = obtenerCategorias().find((item) => item.id === id);
+    if (!categoria || !window.confirm(`¿Eliminar la categoría "${categoria.nombre}"? Los recursos quedarán sin categoría.`)) return;
+    const recursos = obtenerRecursos();
+    recursos.forEach((recurso) => {
+        if (recurso.categoriaId === id) {
+            recurso.categoriaId = '';
+            recurso.categoria = '';
+        }
+    });
+    guardarRecursos(recursos);
+    guardarCategorias(obtenerCategorias().filter((item) => item.id !== id));
+    cancelarEdicionCategoria();
+    actualizarSelectoresCategorias();
+    renderizarListaCategorias();
+    renderizarCatalogoDocente();
+    renderizarCatalogoEstudiante();
 }
 
 // Rellena el formulario para crear o editar un recurso y muestra su ventana modal.
@@ -586,7 +862,6 @@ function abrirFormularioRecurso(tipo, id = '') {
     document.getElementById('recursoTipo').value = tipo;
     document.getElementById('recursoId').value = recurso ? recurso.id : '';
     document.getElementById('recursoTitulo').value = recurso?.titulo || '';
-    document.getElementById('recursoCategoria').value = recurso?.categoria || '';
     document.getElementById('recursoDescripcion').value = recurso?.descripcion || '';
     document.getElementById('recursoUrl').value = recurso?.url || '';
     document.getElementById('recursoImagen').value = recurso?.imagen || '';
@@ -597,8 +872,22 @@ function abrirFormularioRecurso(tipo, id = '') {
     actualizarAyudaOrigenLectura();
     document.getElementById('tituloModalRecurso').textContent = recurso ? 'Editar recurso' : 'Agregar recurso';
     document.getElementById('etiquetaCategoria').textContent = tipo === 'videos'
-        ? 'Canal o tema'
-        : tipo === 'juegos' ? 'Categoría del juego' : 'Categoría o autor';
+        ? 'Categoría'
+        : tipo === 'juegos' ? 'Categoría del juego' : 'Categoría';
+    actualizarSelectoresCategorias();
+    const selectorCategoria = document.getElementById('recursoCategoria');
+    if (recurso?.categoriaId && obtenerCategorias().some((categoria) => categoria.id === recurso.categoriaId)) {
+        selectorCategoria.value = recurso.categoriaId;
+    } else if (recurso?.categoria) {
+        const valorAnterior = `legacy:${recurso.categoria}`;
+        const opcionAnterior = document.createElement('option');
+        opcionAnterior.value = valorAnterior;
+        opcionAnterior.textContent = `${recurso.categoria} (categoría anterior)`;
+        selectorCategoria.append(opcionAnterior);
+        selectorCategoria.value = valorAnterior;
+    } else {
+        selectorCategoria.value = '';
+    }
     modal.classList.add('active');
     modal.setAttribute('aria-hidden', 'false');
     document.getElementById('recursoTitulo').focus();
@@ -639,7 +928,12 @@ function guardarRecursoDesdeFormulario(event) {
     const imagenIngresada = document.getElementById('recursoImagen').value.trim();
     const imagen = imagenIngresada ? urlSegura(imagenIngresada) : '';
     const titulo = document.getElementById('recursoTitulo').value.trim();
-    const categoria = document.getElementById('recursoCategoria').value.trim();
+    const categoriaSeleccionada = document.getElementById('recursoCategoria').value;
+    const categoriaRegistrada = obtenerCategorias().find((item) => item.id === categoriaSeleccionada);
+    const categoriaAnterior = categoriaSeleccionada.startsWith('legacy:')
+        ? categoriaSeleccionada.slice('legacy:'.length)
+        : '';
+    const categoria = categoriaRegistrada?.nombre || categoriaAnterior;
     const descripcion = document.getElementById('recursoDescripcion').value.trim();
     const mensaje = document.getElementById('mensajeRecurso');
     if (mensaje) {
@@ -664,6 +958,7 @@ function guardarRecursoDesdeFormulario(event) {
         tipo,
         titulo,
         categoria,
+        categoriaId: categoriaRegistrada?.id || '',
         descripcion,
         url,
         imagen
