@@ -319,6 +319,18 @@ function esEnlaceDrive(valor) {
     }
 }
 
+function obtenerIdArchivoDrive(valor) {
+    if (!esEnlaceDrive(valor)) return '';
+    try {
+        const url = new URL(valor);
+        return url.pathname.match(/\/file\/d\/([A-Za-z0-9_-]+)/)?.[1]
+            || url.searchParams.get('id')?.match(/^[A-Za-z0-9_-]+$/)?.[0]
+            || '';
+    } catch (error) {
+        return '';
+    }
+}
+
 // Lee una lista del almacenamiento local; si el JSON está dañado, elimina ese valor inválido.
 function obtenerListaLocal(clave) {
     try {
@@ -490,13 +502,18 @@ function crearReproductorVideo(urlOriginal, titulo) {
     const host = url.hostname.replace(/^www\./, '').toLowerCase();
     let urlIncrustada = '';
 
+    const idArchivoDrive = obtenerIdArchivoDrive(url.href);
+    if (idArchivoDrive) {
+        urlIncrustada = `https://drive.google.com/file/d/${encodeURIComponent(idArchivoDrive)}/preview`;
+    }
+
     // Convierte los enlaces habituales de YouTube y Vimeo a sus direcciones de inserción.
-    if (host === 'youtu.be') {
+    if (!urlIncrustada && host === 'youtu.be') {
         urlIncrustada = `https://www.youtube-nocookie.com/embed/${url.pathname.split('/').filter(Boolean)[0] || ''}`;
-    } else if (host === 'youtube.com' || host === 'm.youtube.com' || host === 'youtube-nocookie.com') {
+    } else if (!urlIncrustada && (host === 'youtube.com' || host === 'm.youtube.com' || host === 'youtube-nocookie.com')) {
         const videoId = url.searchParams.get('v') || url.pathname.match(/\/(?:embed|shorts|live)\/([^/?]+)/)?.[1];
         if (videoId) urlIncrustada = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoId)}`;
-    } else if (host === 'vimeo.com' || host === 'player.vimeo.com') {
+    } else if (!urlIncrustada && (host === 'vimeo.com' || host === 'player.vimeo.com')) {
         const videoId = url.pathname.match(/\/(?:video\/)?(\d+)/)?.[1];
         if (videoId) urlIncrustada = `https://player.vimeo.com/video/${videoId}`;
     }
@@ -504,11 +521,11 @@ function crearReproductorVideo(urlOriginal, titulo) {
     const tituloSeguro = escaparHTML(titulo);
     const ruta = url.pathname.toLowerCase();
     // Los archivos de video se reproducen con el elemento nativo; los demás se muestran en un iframe.
-    if (/\.(mp4|webm|ogg)$/.test(ruta)) {
+    if (!idArchivoDrive && /\.(mp4|webm|ogg)$/.test(ruta)) {
         return `<video controls preload="metadata" playsinline aria-label="${tituloSeguro}"><source src="${escaparHTML(url.href)}">Tu navegador no puede reproducir este video.</video>`;
     }
 
-    if (urlIncrustada && ['http:', 'https:'].includes(window.location.protocol)) {
+    if (urlIncrustada && !idArchivoDrive && ['http:', 'https:'].includes(window.location.protocol)) {
         const embed = new URL(urlIncrustada);
         embed.searchParams.set('origin', window.location.origin);
         urlIncrustada = embed.href;
@@ -867,8 +884,13 @@ function abrirFormularioRecurso(tipo, id = '') {
     document.getElementById('recursoImagen').value = recurso?.imagen || '';
     const grupoOrigen = document.getElementById('origenLecturaGroup');
     const origenLectura = document.getElementById('origenLectura');
-    grupoOrigen.hidden = tipo !== 'lecturas';
-    origenLectura.value = recurso?.origenLectura || (recurso && esEnlaceDrive(recurso.url) ? 'drive' : 'web');
+    const usaDrive = tipo === 'lecturas' || tipo === 'videos';
+    grupoOrigen.hidden = !usaDrive;
+    origenLectura.value = recurso?.[tipo === 'videos' ? 'origenVideo' : 'origenLectura']
+        || (recurso && esEnlaceDrive(recurso.url) ? 'drive' : 'web');
+    document.getElementById('etiquetaOrigenRecurso').textContent = tipo === 'videos'
+        ? 'Añadir video desde'
+        : 'Añadir lectura desde';
     actualizarAyudaOrigenLectura();
     document.getElementById('tituloModalRecurso').textContent = recurso ? 'Editar recurso' : 'Agregar recurso';
     document.getElementById('etiquetaCategoria').textContent = tipo === 'videos'
@@ -894,20 +916,23 @@ function abrirFormularioRecurso(tipo, id = '') {
 }
 
 function actualizarAyudaOrigenLectura() {
-    const esLectura = document.getElementById('recursoTipo').value === 'lecturas';
-    const esDrive = esLectura && document.getElementById('origenLectura').value === 'drive';
-    document.getElementById('etiquetaRecursoUrl').textContent = !esLectura
-        ? 'Enlace del recurso'
-        : esDrive
+    const tipo = document.getElementById('recursoTipo').value;
+    const usaDrive = ['lecturas', 'videos'].includes(tipo);
+    const esDrive = usaDrive && document.getElementById('origenLectura').value === 'drive';
+    document.getElementById('etiquetaRecursoUrl').textContent = esDrive
         ? 'Enlace compartido de Google Drive'
-        : 'Enlace de la página web';
+        : tipo === 'lecturas' ? 'Enlace de la página web' : 'Enlace del video';
     document.getElementById('recursoUrl').placeholder = esDrive
         ? 'https://drive.google.com/file/d/...'
-        : 'https://';
-    if (!esLectura) return;
+        : tipo === 'lecturas' ? 'https://' : 'https:// o enlace de YouTube/Vimeo';
+    if (!usaDrive) return;
     document.getElementById('ayudaOrigenLectura').textContent = esDrive
-        ? 'Pega el enlace para compartir de Drive y permite que los estudiantes que tengan el enlace puedan verlo.'
-        : 'Pega la dirección web donde se encuentra la lectura.';
+        ? tipo === 'videos'
+            ? 'Pega el enlace para compartir del archivo de video en Drive y permite que los estudiantes con el enlace puedan verlo.'
+            : 'Pega el enlace para compartir de Drive y permite que los estudiantes que tengan el enlace puedan verlo.'
+        : tipo === 'videos'
+            ? 'Puedes usar un enlace de video directo, YouTube o Vimeo.'
+            : 'Pega la dirección web donde se encuentra la lectura.';
 }
 
 // Oculta el formulario modal de recursos.
@@ -944,8 +969,12 @@ function guardarRecursoDesdeFormulario(event) {
         if (mensaje) mensaje.textContent = 'Revisa que los enlaces comiencen con https:// o http://.';
         return;
     }
-    if (tipo === 'lecturas' && origenLectura === 'drive' && !esEnlaceDrive(url)) {
+    if (['lecturas', 'videos'].includes(tipo) && origenLectura === 'drive' && !esEnlaceDrive(url)) {
         if (mensaje) mensaje.textContent = 'Pega un enlace compartido de drive.google.com o docs.google.com.';
+        return;
+    }
+    if (tipo === 'videos' && origenLectura === 'drive' && !obtenerIdArchivoDrive(url)) {
+        if (mensaje) mensaje.textContent = 'El enlace de Drive no contiene un identificador de archivo válido.';
         return;
     }
     if (pareceContenidoAdulto(`${titulo} ${categoria} ${descripcion} ${url}`)) {
@@ -964,6 +993,7 @@ function guardarRecursoDesdeFormulario(event) {
         imagen
     };
     if (tipo === 'lecturas') recurso.origenLectura = origenLectura;
+    if (tipo === 'videos') recurso.origenVideo = origenLectura;
     const recursos = obtenerRecursos();
     const indice = recursos.findIndex((item) => item.id === id);
     if (indice < 0) recursos.push(recurso);
