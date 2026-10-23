@@ -3,28 +3,44 @@
 ====================================================== */
 
 :root {
-    --header-bg: #2F6F66;
-    --header-accent: #5B9B89;
-    --accent-color: #F09A6A;
+    --header-bg: #2C6257;
+    --header-accent: #4B8577;
+    --accent-color: #A94F2B;
+    --action-bg: #A94F2B;
     --card-bg: #FFFFFF;
-    --page-bg: #F2F8F5;
-    --border-color: #D6E7DF;
+    --page-bg: #F3F7F4;
+    --surface-muted: #E7F0EB;
+    --border-color: #D7E4DD;
     --text-primary: #243B35;
-    --text-secondary: #607A71;
+    --text-secondary: #536B62;
+    --accent-soft-bg: #FCE9DE;
+    --accent-soft-text: #8F4327;
+    --success-color: #2C6257;
+    --danger-bg: #FFF0EC;
+    --danger-border: #E5C6C1;
+    --danger-text: #9E382B;
     --shadow-soft: 0 4px 16px rgba(47, 111, 102, 0.09);
     --shadow-hover: 0 10px 24px rgba(47, 111, 102, 0.16);
 }
 
 html[data-theme="dark"] {
     color-scheme: dark;
-    --header-bg: #173B35;
-    --header-accent: #2C6257;
-    --accent-color: #E99768;
+    --header-bg: #183B34;
+    --header-accent: #2D5E52;
+    --accent-color: #E29469;
+    --action-bg: #A94F2B;
     --card-bg: #202C29;
     --page-bg: #131C19;
+    --surface-muted: #293B34;
     --border-color: #3A4E47;
     --text-primary: #E8F0EC;
-    --text-secondary: #B1C1BA;
+    --text-secondary: #B8C8C0;
+    --accent-soft-bg: #49352C;
+    --accent-soft-text: #F0B092;
+    --success-color: #A8D8BE;
+    --danger-bg: #352522;
+    --danger-border: #67423D;
+    --danger-text: #F0B0A5;
     --shadow-soft: 0 4px 16px rgba(0, 0, 0, 0.2);
     --shadow-hover: 0 10px 24px rgba(0, 0, 0, 0.35);
 }
@@ -37,7 +53,7 @@ body {
     margin: 0;
     background: var(--page-bg);
     color: var(--text-primary);
-    font-family: Georgia, "Times New Roman", serif;
+    font-family: "Segoe UI", Arial, sans-serif;
     line-height: 1.6;
 }
 
@@ -81,7 +97,7 @@ button {
 }
 
 .select-ingreso option {
-    background: #FFFFFF;
+    background: var(--card-bg);
     color: var(--text-primary);
 }
 
@@ -168,13 +184,13 @@ button {
     flex: 0 0 auto;
     place-items: center;
     border-radius: 6px;
-    background: #E3F2EC;
+    background: var(--surface-muted);
     color: var(--header-bg);
 }
 
 .role-option-icon.teacher {
-    background: #FCE9DE;
-    color: #A85639;
+    background: var(--accent-soft-bg);
+    color: var(--accent-soft-text);
 }
 
 .role-option strong,
@@ -253,7 +269,7 @@ re-icon {
     aspect-ratio: 1;
     place-items: center;
     border-radius: 50%;
-    background: var(--accent-color);
+    background: var(--action-bg);
     color: #FFFFFF;
     font-weight: 700;
 }
@@ -418,7 +434,7 @@ re-icon {
     margin-top: 0.5rem;
     border: 0;
     border-radius: 5px;
-    background: var(--accent-color);
+    background: var(--action-bg);
     color: #FFFFFF;
     font-weight: 700;
 }
@@ -438,7 +454,7 @@ re-icon {
 .form-message {
     min-height: 1.4rem;
     margin: 0.25rem 0;
-    color: #A33D35;
+    color: var(--danger-text);
     font-size: 0.9rem;
 }
 
@@ -477,6 +493,14 @@ re-icon {
     .login-card {
         padding: 1.5rem;
     }
+
+    .student-header-actions {
+        width: 100%;
+    }
+
+    .student-header-actions button {
+        flex: 1;
+    }
 }
 
 /* ===================================================
@@ -498,11 +522,11 @@ re-icon {
 }
 
 .connection-status[data-estado="conectado"] {
-    color: var(--header-bg);
+    color: var(--success-color);
 }
 
 .connection-status[data-estado="error"] {
-    color: #9E382B;
+    color: var(--danger-text);
 }
 
 .nav-container {
@@ -644,8 +668,8 @@ re-icon {
 }
 
 .categoria-tag.juego {
-    background-color: #FCE8DC;
-    color: var(--accent-color);
+    background-color: var(--accent-soft-bg);
+    color: var(--accent-soft-text);
 }
 
 .card-libro-info h4 {
@@ -665,7 +689,7 @@ re-icon {
     justify-content: center;
     gap: 0.45rem;
     margin-top: auto;
-    background-color: var(--accent-color);
+    background-color: var(--action-bg);
     color: white;
     border: none;
     padding: 0.6rem;
@@ -876,13 +900,13 @@ re-icon {
 }
 
 .delete-button {
-    border-color: #E5C6C1;
-    background: #FFF8F6;
-    color: #9E382B;
+    border-color: var(--danger-border);
+    background: var(--danger-bg);
+    color: var(--danger-text);
 }
 
 .delete-button:hover {
-    background: #FCEBE7;
+    background: var(--accent-soft-bg);
 }
 
 .management-list.grid-yt {
@@ -1049,7 +1073,7 @@ re-icon {
     width: 100%;
     aspect-ratio: 16 / 9;
     overflow: hidden;
-    background: #19322F;
+    background: var(--header-bg);
 }
 
 .video-player iframe,
@@ -1218,9 +1242,9 @@ re-icon {
 
 .rating-options label:has(input:checked),
 .rating-options label:has(input:focus-visible) {
-    border-color: #D5902D;
-    background: #FFF5E3;
-    color: #B87519;
+    border-color: var(--accent-color);
+    background: var(--accent-soft-bg);
+    color: var(--accent-soft-text);
 }
 
 .rating-options label:has(input:focus-visible) {
@@ -1269,14 +1293,14 @@ re-icon {
     gap: 0.65rem;
     margin: 1rem 0;
     padding: 0.8rem 0.9rem;
-    border-left: 4px solid #D7795C;
-    background: #FFF0E9;
-    color: #713E32;
+    border-left: 4px solid var(--accent-color);
+    background: var(--accent-soft-bg);
+    color: var(--accent-soft-text);
     font-size: 0.9rem;
 }
 
 .content-policy re-icon {
-    color: #A85639;
+    color: var(--accent-color);
 }
 
 .suggestion-form {
@@ -1329,7 +1353,7 @@ re-icon {
 }
 
 .form-message.success {
-    color: var(--header-bg);
+    color: var(--success-color);
 }
 
 .suggestion-list {
@@ -1369,67 +1393,46 @@ html[data-theme="dark"] .select-ingreso option {
 }
 
 html[data-theme="dark"] .role-option-icon {
-    background: #29453D;
-    color: #B8D9CC;
+    background: var(--surface-muted);
+    color: var(--text-primary);
 }
 
-html[data-theme="dark"] .role-option-icon.teacher {
-    background: #49352C;
-    color: #F0B092;
-}
-
-html[data-theme="dark"] .category-tag.juego {
-    background-color: #49352C;
-    color: #F0B092;
+html[data-theme="dark"] .categoria-tag.juego {
+    background-color: var(--accent-soft-bg);
+    color: var(--accent-soft-text);
 }
 
 html[data-theme="dark"] .delete-button {
-    border-color: #67423D;
-    background: #352522;
-    color: #F0B0A5;
-}
-
-html[data-theme="dark"] .delete-button:hover {
-    background: #49302B;
-}
-
-html[data-theme="dark"] .rating-options label:has(input:checked),
-html[data-theme="dark"] .rating-options label:has(input:focus-visible) {
-    background: #493C25;
-    color: #F4C77D;
-}
-
-html[data-theme="dark"] .content-policy {
-    background: #352522;
-    color: #F0C2B8;
-}
-
-html[data-theme="dark"] .content-policy re-icon {
-    color: #F0B092;
+    border-color: var(--danger-border);
+    background: var(--danger-bg);
+    color: var(--danger-text);
 }
 
 .theme-toggle {
-    position: fixed;
-    right: 1rem;
-    bottom: 1rem;
-    z-index: 20;
     min-height: 44px;
-    padding: 0.65rem 0.9rem;
-    border: 1px solid var(--border-color);
-    border-radius: 999px;
-    background: var(--card-bg);
-    color: var(--text-primary);
-    box-shadow: var(--shadow-hover);
+    padding: 0.55rem 0.85rem;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 6px;
+    background: var(--header-accent);
+    color: #FFFFFF;
     font-weight: 700;
 }
 
 .theme-toggle:hover {
-    border-color: var(--header-accent);
+    background: var(--header-bg);
 }
 
 .theme-toggle:focus-visible {
-    outline: 3px solid var(--accent-color);
+    outline: 3px solid #FFD0B6;
     outline-offset: 3px;
+}
+
+.student-header-actions {
+    display: flex;
+    flex: 0 0 auto;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.65rem;
 }
 
 .suggestion-item p {
@@ -1446,13 +1449,13 @@ html[data-theme="dark"] .content-policy re-icon {
 }
 
 .suggestion-status {
-    color: #9B5A22;
+    color: var(--accent-color);
     font-size: 0.82rem;
     font-weight: 700;
 }
 
 .suggestion-status.reviewed {
-    color: var(--header-bg);
+    color: var(--success-color);
 }
 
 @media (max-width: 600px) {
