@@ -27,6 +27,8 @@ let sincronizandoFirebase = false;
 
 // Configura formularios y eventos cuando el documento ya tiene sus elementos HTML.
 document.addEventListener('DOMContentLoaded', () => {
+    inicializarSelectorTema();
+
     const formEstudiante = document.getElementById('formLoginEstudiante');
     if (formEstudiante) {
         formEstudiante.addEventListener('submit', (event) => {
@@ -86,6 +88,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
     inicializarGestionRecursos();
 });
+
+function inicializarSelectorTema() {
+    const claveTema = 'bibliotecaTema';
+    const botonTema = document.createElement('button');
+    botonTema.type = 'button';
+    botonTema.className = 'theme-toggle';
+    botonTema.setAttribute('aria-pressed', 'false');
+    document.body.append(botonTema);
+
+    const aplicarTema = (tema) => {
+        document.documentElement.dataset.theme = tema;
+        localStorage.setItem(claveTema, tema);
+        const modoOscuro = tema === 'dark';
+        botonTema.textContent = modoOscuro ? 'Activar modo claro' : 'Activar modo oscuro';
+        botonTema.setAttribute('aria-pressed', String(modoOscuro));
+    };
+
+    aplicarTema(localStorage.getItem(claveTema) === 'dark' ? 'dark' : 'light');
+    botonTema.addEventListener('click', () => {
+        aplicarTema(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
+    });
+}
 
 function inicializarAccesoProfesor() {
     const formularioInicio = document.getElementById('formInicioSesionProfesor');
