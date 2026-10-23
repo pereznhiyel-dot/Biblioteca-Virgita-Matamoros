@@ -90,12 +90,10 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function inicializarSelectorTema() {
-    const claveTema = 'bibliotecaTema';
-    const botonTema = document.createElement('button');
-    botonTema.type = 'button';
-    botonTema.className = 'theme-toggle';
-    botonTema.setAttribute('aria-pressed', 'false');
-    document.body.append(botonTema);
+    const botonTema = document.getElementById('btnCambiarTemaEstudiante');
+    if (!botonTema) return;
+
+    const claveTema = 'bibliotecaTemaEstudiante';
 
     const aplicarTema = (tema) => {
         document.documentElement.dataset.theme = tema;
