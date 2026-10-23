@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Estudiante - CTP Guácimo</title>
+    <script>
+        if (localStorage.getItem('bibliotecaTemaEstudiante') === 'dark') {
+            document.documentElement.dataset.theme = 'dark';
+        }
+    </script>
+    <!-- Estilos de la aplicación -->
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://unpkg.com/reicon/cdn/reicon.js" defer></script>
+</head>
+<body>
+
+    <!-- Header / Banner superior del panel -->
+    <header class="biblioteca-header">
+        <div class="banner-frase">
+            <h1 id="mensajeBienvenida">Bienvenido/a Estudiante</h1>
+        </div>
+        <div class="student-header-actions">
+            <button id="btnCambiarTemaEstudiante" class="theme-toggle" type="button" aria-pressed="false">Activar modo oscuro</button>
+            <button id="btnCerrarSesion" class="select-ingreso" type="button">Cerrar Sesión</button>
+        </div>
+    </header>
+
+    <!-- Menú Banner de Navegación entre secciones -->
+    <nav class="nav-banner">
+        <div class="nav-container">
+            <button class="nav-tab active" onclick="cambiarPestana('principal', this)"><re-icon icon="home" size="20" aria-hidden="true"></re-icon>Principal</button>
+            <button class="nav-tab" onclick="cambiarPestana('lecturas', this)"><re-icon icon="book-open" size="20" aria-hidden="true"></re-icon>Lecturas</button>
+            <button class="nav-tab" onclick="cambiarPestana('videos', this)"><re-icon icon="video" size="20" aria-hidden="true"></re-icon>Videos</button>
+            <button class="nav-tab" onclick="cambiarPestana('juegos', this)"><re-icon icon="gamepad" size="20" aria-hidden="true"></re-icon>Juegos</button>
+        </div>
+    </nav>
+
+    <div id="estadoConexionFirebase" class="connection-status" role="status" aria-live="polite">Conectando con la biblioteca...</div>
+
+    <main class="biblioteca-main">
+
+        <!-- ================= PESTAÑA 1: PRINCIPAL ================= -->
+        <div id="tab-principal" class="tab-content active">
+            <!-- Sección Misión, Visión y Quiénes Somos -->
+            <section class="info-grid">
+                <!-- Tarjeta Quiénes Somos -->
+                <div class="info-card">
+                    <h3><re-icon icon="user" size="20" aria-hidden="true"></re-icon>Quiénes Somos</h3>
+                    <p>Somos el espacio oficial de la Biblioteca del CTP Guácimo, dedicado a fomentar el aprendizaje, el gusto por la lectura y el desarrollo de habilidades técnicas mediante recursos educativos e interactivos.</p>
+                </div>
+
+                <!-- Tarjeta Misión -->
+                <div class="info-card">
+                    <h3><re-icon icon="book-open" size="20" aria-hidden="true"></re-icon>Misión</h3>
+                    <p>Brindar a la comunidad estudiantil un acceso fácil, moderno y organizado a materiales didácticos digitales, promoviendo el conocimiento y la autogestión académica.</p>
+                </div>
+
+                <!-- Tarjeta Visión -->
+                <div class="info-card">
+                    <h3><re-icon icon="library" size="20" aria-hidden="true"></re-icon>Visión</h3>
+                    <p>Convertirnos en un centro de recursos digitales líder a nivel técnico profesional, facilitando el aprendizaje dentro y fuera de las aulas.</p>
+                </div>
+
+                <!-- Tarjeta ¿Por qué esta página? -->
+                <div class="info-card destacada">
+                    <h3><re-icon icon="video" size="20" aria-hidden="true"></re-icon>¿Por qué esta página?</h3>
+                    <p>Esta plataforma fue creada para centralizar las lecturas obligatorias, videos educativos y juegos interactivos en un solo lugar amigable, sin distracciones y accesible para toda la institución.</p>
+                </div>
+            </section>
+
+            <section class="suggestion-section" aria-labelledby="tituloSugerencias">
+                <div class="suggestion-heading">
+                    <div>
+                        <p class="eyebrow"><re-icon icon="message-square" size="18" aria-hidden="true"></re-icon>Participa en el catálogo</p>
+                        <h2 id="tituloSugerencias">Propón un recurso educativo</h2>
+                        <p>Comparte una lectura, un video o un juego que ayude a aprender.</p>
+                    </div>
+                </div>
+                <p class="content-policy"><re-icon icon="shield-check" size="20" aria-hidden="true"></re-icon>Está terminantemente prohibido proponer contenido para adultos o +18. Cada enlace queda pendiente de revisión docente y no se publica automáticamente.</p>
+                <form id="formularioSugerencia" class="suggestion-form">
+                    <div class="suggestion-fields">
+                        <div class="form-group">
+                            <label for="nombreSugerencia">Tu nombre</label>
+                            <input id="nombreSugerencia" type="text" maxlength="100" autocomplete="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="tipoSugerencia">Tipo de recurso</label>
+                            <select id="tipoSugerencia" required>
+                                <option value="lecturas">Lectura</option>
+                                <option value="videos">Video</option>
+                                <option value="juegos">Juego</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="tituloSugerencia">Nombre del recurso</label>
+                            <input id="tituloSugerencia" type="text" maxlength="120" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="urlSugerencia">Enlace</label>
+                            <input id="urlSugerencia" type="url" placeholder="https://" required>
+                        </div>
+                    </div>
+                    <label class="policy-confirmation">
+                        <input id="confirmarContenidoApropiado" type="checkbox" required>
+                        <span>Confirmo que el recurso es educativo, apropiado para estudiantes y no contiene material adulto ni +18.</span>
+                    </label>
+                    <div class="suggestion-submit-row">
+                        <p id="mensajeSugerencia" class="form-message" aria-live="polite"></p>
+                        <button class="action-button" type="submit"><re-icon icon="send" size="18" aria-hidden="true"></re-icon>Enviar propuesta</button>
+                    </div>
+                </form>
+            </section>
+        </div>
+
+        <!-- ================= PESTAÑA 2: LECTURAS ================= -->
+        <div id="tab-lecturas" class="tab-content">
+            <h2 class="section-title"><re-icon icon="book-open" size="24" aria-hidden="true"></re-icon>Catálogo de Lecturas</h2>
+            <div class="category-filter">
+                <label for="filtro-categoria-lecturas">Filtrar por categoría</label>
+                <select id="filtro-categoria-lecturas" data-filtro-categoria="lecturas">
+                    <option value="">Todas las categorías</option>
+                </select>
+            </div>
+            <div id="lista-estudiante-lecturas" class="grid-cartas">
+                
+                <!-- Carta de Lectura 1 -->
+                <div class="card-libro" onclick="abrirLector('Don Quijote de la Mancha', 'https://www.gutenberg.org/files/2000/2000-h/2000-h.htm')">
+                    <img src="https://picsum.photos/300/400?random=101" alt="Portada Libro 1">
+                    <div class="card-libro-info">
+                        <span class="categoria-tag">Literatura</span>
+                        <h4>Don Quijote de la Mancha</h4>
+                        <p>Miguel de Cervantes</p>
+                        <button class="btn-leer">📖 Leer Libro</button>
+                    </div>
+                </div>
+
+                <!-- Carta de Lectura 2 -->
+                <div class="card-libro" onclick="abrirLector('Cuentos de mi Tía Panchita', 'https://www.imprentanacional.go.cr/editorialdigital/libros/literatura%20infantil/cuentos_de_mi_tia_panchita_edicion_mep.pdf')">
+                    <img src="https://picsum.photos/300/400?random=102" alt="Portada Libro 2">
+                    <div class="card-libro-info">
+                        <span class="categoria-tag">Nacional</span>
+                        <h4>Cuentos de mi Tía Panchita</h4>
+                        <p>Carmen Lyra</p>
+                        <button class="btn-leer">📖 Leer Libro</button>
+                    </div>
+                </div>
+
+                <!-- Carta de Lectura 3 -->
+                <div class="card-libro" onclick="abrirLector('Manual de Seguridad Industrial', 'https://www.google.com')">
+                    <img src="https://picsum.photos/300/400?random=103" alt="Portada Libro 3">
+                    <div class="card-libro-info">
+                        <span class="categoria-tag">Técnico</span>
+                        <h4>Manual de Seguridad Industrial</h4>
+                        <p>CTP Guácimo</p>
+                        <button class="btn-leer">📖 Leer Libro</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ================= PESTAÑA 3: VIDEOS ================= -->
+        <div id="tab-videos" class="tab-content">
+            <h2 class="section-title"><re-icon icon="video" size="24" aria-hidden="true"></re-icon>Videoteca Educativa</h2>
+            <div class="category-filter">
+                <label for="filtro-categoria-videos">Filtrar por categoría</label>
+                <select id="filtro-categoria-videos" data-filtro-categoria="videos">
+                    <option value="">Todas las categorías</option>
+                </select>
+            </div>
+            <div id="lista-estudiante-videos" class="grid-yt">
+                
+                <!-- Video Estilo YouTube 1 -->
+                <div class="yt-card">
+                    <div class="yt-thumbnail">
+                        <iframe src="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ" title="Video educacional 1" allowfullscreen></iframe>
+                    </div>
+                    <div class="yt-details">
+                        <h4>Introducción a la Tecnología del CTP Guácimo</h4>
+                        <p class="yt-canal">Biblioteca CTP • 1.2k vistas</p>
+                    </div>
+                </div>
+
+                <!-- Video Estilo YouTube 2 -->
+                <div class="yt-card">
+                    <div class="yt-thumbnail">
+                        <iframe src="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ" title="Video educacional 2" allowfullscreen></iframe>
+                    </div>
+                    <div class="yt-details">
+                        <h4>Cómo aprovechar la lectura digital</h4>
+                        <p class="yt-canal">Orientación Educativa • 850 vistas</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ================= PESTAÑA 4: JUEGOS ================= -->
+        <div id="tab-juegos" class="tab-content">
+            <h2 class="section-title"><re-icon icon="gamepad" size="24" aria-hidden="true"></re-icon>Juegos Interactivos y Trivia</h2>
+            <div id="lista-estudiante-juegos" class="grid-cartas">
+                
+                <!-- Carta de Juego 1 -->
+                <div class="card-libro" onclick="abrirJuego('Ajedrez Escolar', 'https://lichess.org/embed')">
+                    <img src="https://picsum.photos/300/200?random=201" alt="Juego Ajedrez">
+                    <div class="card-libro-info">
+                        <span class="categoria-tag juego">Estrategia</span>
+                        <h4>Ajedrez Online</h4>
+                        <p>Desarrolla la lógica y la concentración</p>
+                        <button class="btn-leer">🎮 Jugar Ahora</button>
+                    </div>
+                </div>
+
+                <!-- Carta de Juego 2 -->
+                <div class="card-libro" onclick="alert('Iniciando Trivia de Ortografía y Literatura...')">
+                    <img src="https://picsum.photos/300/200?random=202" alt="Juego Trivia">
+                    <div class="card-libro-info">
+                        <span class="categoria-tag juego">Trivia</span>
+                        <h4>Desafío de Palabras</h4>
+                        <p>Trivia de ortografía y literatura general</p>
+                        <button class="btn-leer">🎮 Jugar Ahora</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal para Lectura de Libros o Recursos -->
+    <div id="modalLector" class="modal">
+        <div class="modal-content modal-large">
+            <span class="close-modal" onclick="cerrarLector()">&times;</span>
+            <h3 id="tituloLector">Lectura</h3>
+            <div class="iframe-container">
+                <iframe id="iframeLector" src="" frameborder="0"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalResena" class="modal" aria-hidden="true">
+        <section class="modal-content review-modal" role="dialog" aria-modal="true" aria-labelledby="tituloModalResena">
+            <button class="close-modal" type="button" aria-label="Cerrar" onclick="cerrarModalResena()">&times;</button>
+            <p class="eyebrow">Opinión estudiantil</p>
+            <h2 id="tituloModalResena">Valorar recurso</h2>
+            <div id="resenasExistentes" class="review-list"></div>
+            <form id="formularioResena">
+                <input id="resenaRecursoId" type="hidden">
+                <fieldset class="rating-picker">
+                    <legend>Tu clasificación</legend>
+                    <div class="rating-options">
+                        <label><input type="radio" name="calificacion" value="1"><span><re-icon icon="star" size="24" aria-hidden="true"></re-icon></span><small>1</small></label>
+                        <label><input type="radio" name="calificacion" value="2"><span><re-icon icon="star" size="24" aria-hidden="true"></re-icon></span><small>2</small></label>
+                        <label><input type="radio" name="calificacion" value="3"><span><re-icon icon="star" size="24" aria-hidden="true"></re-icon></span><small>3</small></label>
+                        <label><input type="radio" name="calificacion" value="4"><span><re-icon icon="star" size="24" aria-hidden="true"></re-icon></span><small>4</small></label>
+                        <label><input type="radio" name="calificacion" value="5" checked><span><re-icon icon="star" size="24" aria-hidden="true"></re-icon></span><small>5</small></label>
+                    </div>
+                </fieldset>
+                <div class="form-group">
+                    <label for="comentarioResena">Comentario</label>
+                    <textarea id="comentarioResena" rows="3" maxlength="500" placeholder="¿Qué te pareció este recurso?" required></textarea>
+                </div>
+                <p id="mensajeResena" class="form-message" aria-live="polite"></p>
+                <button class="action-button" type="submit"><re-icon icon="send" size="18" aria-hidden="true"></re-icon>Publicar opinión</button>
+            </form>
+        </section>
+    </div>
+
+    <!-- Archivo JS con la lógica -->
+    <script type="module" src="js/firebase.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
