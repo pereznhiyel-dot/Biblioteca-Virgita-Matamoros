@@ -216,10 +216,43 @@ function guardarCategorias(categorias) {
 }
 
 function obtenerCategoriaRecurso(recurso) {
-    const categoria = obtenerCategorias().find((item) => item.id === recurso.categoriaId);
+    const categorias = obtenerCategorias();
+    const categoria = categorias.find((item) => item.id === recurso.categoriaId);
     return categoria
-        ? { nombre: categoria.nombre, icono: categoria.icono || '' }
+        ? {
+            nombre: rutaCategoria(categoria, categorias).map((item) => item.nombre).join(' › '),
+            icono: categoria.icono || categorias.find((item) => item.id === categoria.parentId)?.icono || ''
+        }
         : { nombre: recurso.categoria || '', icono: '' };
+}
+
+function rutaCategoria(categoria, categorias = obtenerCategorias()) {
+    const ruta = [categoria];
+    let actual = categoria;
+    while (actual.parentId) {
+        const padre = categorias.find((item) => item.id === actual.parentId);
+        if (!padre || ruta.some((item) => item.id === padre.id)) break;
+        ruta.unshift(padre);
+        actual = padre;
+    }
+    return ruta;
+}
+
+function categoriaDesciendeDe(categoriaId, ancestroId, categorias = obtenerCategorias()) {
+    let actual = categorias.find((item) => item.id === categoriaId);
+    while (actual?.parentId) {
+        if (actual.parentId === ancestroId) return true;
+        actual = categorias.find((item) => item.id === actual.parentId);
+    }
+    return false;
+}
+
+function ordenarCategoriasJerarquicamente(categorias) {
+    const ordenadasPorNombre = [...categorias].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+    return ordenadasPorNombre.filter((categoria) => !categoria.parentId).flatMap((principal) => [
+        principal,
+        ...ordenadasPorNombre.filter((categoria) => categoria.parentId === principal.id)
+    ]);
 }
 
 function renderizarEtiquetaCategoria(recurso, clase = '') {
@@ -241,21 +274,30 @@ function valorCategoriaRecurso(recurso) {
 function recursosCoincidenConFiltro(recursos, tipo) {
     const filtro = document.querySelector(`[data-filtro-categoria="${tipo}"]`)?.value || '';
     if (!filtro) return recursos;
-    return recursos.filter((recurso) => valorCategoriaRecurso(recurso) === filtro);
+    const categorias = obtenerCategorias();
+    return recursos.filter((recurso) =>
+        valorCategoriaRecurso(recurso) === filtro
+        || categoriaDesciendeDe(recurso.categoriaId, filtro, categorias)
+    );
 }
 
 function actualizarSelectoresCategorias() {
-    const categorias = obtenerCategorias().sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+    const categorias = obtenerCategorias();
+    const categoriasOrdenadas = ordenarCategoriasJerarquicamente(categorias);
     const recursos = obtenerRecursos();
     document.querySelectorAll('[data-filtro-categoria]').forEach((select) => {
         const seleccion = select.value;
         const tipo = select.dataset.filtroCategoria;
         const valores = new Map();
-        const categoriasUsadas = new Set(
-            recursos.filter((recurso) => recurso.tipo === tipo).map((recurso) => recurso.categoriaId)
-        );
-        categorias.filter((categoria) => categoriasUsadas.has(categoria.id))
-            .forEach((categoria) => valores.set(categoria.id, categoria.nombre));
+        const recursosTipo = recursos.filter((recurso) => recurso.tipo === tipo);
+        const categoriasUsadas = new Set(recursosTipo.map((recurso) => recurso.categoriaId).filter(Boolean));
+        categoriasOrdenadas.forEach((categoria) => {
+            const tieneRecursos = categoriasUsadas.has(categoria.id)
+                || [...categoriasUsadas].some((id) => categoriaDesciendeDe(id, categoria.id, categorias));
+            if (tieneRecursos) {
+                valores.set(categoria.id, rutaCategoria(categoria, categorias).map((item) => item.nombre).join(' › '));
+            }
+        });
         recursos.filter((recurso) => recurso.tipo === tipo && recurso.categoria && !recurso.categoriaId)
             .forEach((recurso) => valores.set(`legacy:${recurso.categoria}`, recurso.categoria));
         const categoriasSinAsignar = recursos.some((recurso) =>
@@ -273,11 +315,25 @@ function actualizarSelectoresCategorias() {
     if (selectorRecurso) {
         const seleccionado = selectorRecurso.value;
         selectorRecurso.innerHTML = '<option value="">Sin categoría</option>'
-            + categorias.map((categoria) =>
-                `<option value="${escaparHTML(categoria.id)}">${escaparHTML(categoria.nombre)}</option>`
+            + categoriasOrdenadas.map((categoria) =>
+                `<option value="${escaparHTML(categoria.id)}">${escaparHTML(rutaCategoria(categoria, categorias).map((item) => item.nombre).join(' › '))}</option>`
             ).join('');
         if ([...selectorRecurso.options].some((option) => option.value === seleccionado)) {
             selectorRecurso.value = seleccionado;
+        }
+    }
+
+    const selectorPadre = document.getElementById('categoriaPadre');
+    if (selectorPadre) {
+        const seleccionado = selectorPadre.value;
+        const idEditado = document.getElementById('categoriaId')?.value || '';
+        selectorPadre.innerHTML = '<option value="">Ninguna (categoría principal)</option>'
+            + categoriasOrdenadas.filter((categoria) => !categoria.parentId && categoria.id !== idEditado)
+                .map((categoria) =>
+                    `<option value="${escaparHTML(categoria.id)}">${escaparHTML(categoria.nombre)}</option>`
+                ).join('');
+        if ([...selectorPadre.options].some((option) => option.value === seleccionado)) {
+            selectorPadre.value = seleccionado;
         }
     }
 }
@@ -772,13 +828,18 @@ function cerrarGestionCategorias() {
 function renderizarListaCategorias() {
     const lista = document.getElementById('listaCategorias');
     if (!lista) return;
-    const categorias = obtenerCategorias().sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
-    lista.innerHTML = categorias.length ? categorias.map((categoria) => {
+    const categorias = obtenerCategorias();
+    const ordenadas = ordenarCategoriasJerarquicamente(categorias);
+    lista.innerHTML = ordenadas.length ? ordenadas.map((categoria) => {
         const iconoValido = /^[a-z0-9-]+$/i.test(categoria.icono || '');
         const icono = iconoValido
             ? `<re-icon icon="${escaparHTML(categoria.icono)}" size="18" aria-hidden="true"></re-icon>`
             : '<re-icon icon="folder" size="18" aria-hidden="true"></re-icon>';
-        return `<article class="category-manager-item"><span class="category-manager-name">${icono}${escaparHTML(categoria.nombre)}</span><div class="resource-actions"><button class="secondary-button" type="button" data-accion-categoria="editar" data-id="${escaparHTML(categoria.id)}">Editar</button><button class="delete-button" type="button" data-accion-categoria="eliminar" data-id="${escaparHTML(categoria.id)}">Eliminar</button></div></article>`;
+        const padre = categorias.find((item) => item.id === categoria.parentId);
+        const nombre = padre
+            ? `<span class="category-parent-label">${escaparHTML(padre.nombre)} ›</span> ${escaparHTML(categoria.nombre)}`
+            : escaparHTML(categoria.nombre);
+        return `<article class="category-manager-item${padre ? ' is-subcategory' : ''}"><span class="category-manager-name">${icono}${nombre}</span><div class="resource-actions"><button class="secondary-button" type="button" data-accion-categoria="editar" data-id="${escaparHTML(categoria.id)}">Editar</button><button class="delete-button" type="button" data-accion-categoria="eliminar" data-id="${escaparHTML(categoria.id)}">Eliminar</button></div></article>`;
     }).join('') : '<p class="empty-state">Todavía no hay categorías. Crea la primera con el formulario.</p>';
 }
 
@@ -787,15 +848,19 @@ function cancelarEdicionCategoria() {
     if (!formulario) return;
     formulario.reset();
     document.getElementById('categoriaId').value = '';
+    document.getElementById('categoriaPadre').value = '';
     document.getElementById('mensajeCategoria').textContent = '';
     document.getElementById('cancelarEdicionCategoria').hidden = true;
+    actualizarSelectoresCategorias();
 }
 
 function editarCategoria(id) {
     const categoria = obtenerCategorias().find((item) => item.id === id);
     if (!categoria) return;
     document.getElementById('categoriaId').value = categoria.id;
+    actualizarSelectoresCategorias();
     document.getElementById('categoriaNombre').value = categoria.nombre;
+    document.getElementById('categoriaPadre').value = categoria.parentId || '';
     document.getElementById('categoriaIcono').value = categoria.icono || '';
     document.getElementById('mensajeCategoria').textContent = '';
     document.getElementById('cancelarEdicionCategoria').hidden = false;
@@ -806,6 +871,7 @@ function guardarCategoriaDesdeFormulario(event) {
     event.preventDefault();
     const id = document.getElementById('categoriaId').value;
     const nombre = document.getElementById('categoriaNombre').value.trim();
+    const parentId = document.getElementById('categoriaPadre').value;
     const iconoIngresado = document.getElementById('categoriaIcono').value.trim();
     const mensaje = document.getElementById('mensajeCategoria');
     const categorias = obtenerCategorias();
@@ -819,6 +885,18 @@ function guardarCategoriaDesdeFormulario(event) {
         mensaje.textContent = 'El icono solo puede contener letras, números y guiones.';
         return;
     }
+    if (parentId && !categorias.some((categoria) => categoria.id === parentId && !categoria.parentId)) {
+        mensaje.textContent = 'Selecciona una categoría principal válida.';
+        return;
+    }
+    if (parentId && (parentId === id || categoriaDesciendeDe(parentId, id, categorias))) {
+        mensaje.textContent = 'Una categoría no puede ser subcategoría de sí misma o de una categoría descendiente.';
+        return;
+    }
+    if (!existente?.parentId && categorias.some((categoria) => categoria.parentId === id) && parentId) {
+        mensaje.textContent = 'Una categoría que ya tiene subcategorías no puede convertirse en subcategoría.';
+        return;
+    }
     if (categorias.some((categoria) =>
         categoria.id !== id && categoria.nombre.trim().toLocaleLowerCase() === nombre.toLocaleLowerCase()
     )) {
@@ -829,7 +907,8 @@ function guardarCategoriaDesdeFormulario(event) {
     const categoria = {
         id: existente?.id || crearIdCategoria(nombre),
         nombre,
-        icono: iconoIngresado || existente?.icono || ''
+        icono: iconoIngresado || existente?.icono || '',
+        parentId
     };
     if (existente) {
         const recursos = obtenerRecursos();
@@ -851,7 +930,12 @@ function guardarCategoriaDesdeFormulario(event) {
 
 function eliminarCategoria(id) {
     const categoria = obtenerCategorias().find((item) => item.id === id);
-    if (!categoria || !window.confirm(`¿Eliminar la categoría "${categoria.nombre}"? Los recursos quedarán sin categoría.`)) return;
+    const categorias = obtenerCategorias();
+    const subcategorias = categorias.filter((item) => item.parentId === id);
+    const consecuencia = subcategorias.length
+        ? ` Sus subcategorías (${subcategorias.map((item) => item.nombre).join(', ')}) pasarán a ser categorías principales.`
+        : '';
+    if (!categoria || !window.confirm(`¿Eliminar la categoría "${categoria.nombre}"? Los recursos directamente asignados quedarán sin categoría.${consecuencia}`)) return;
     const recursos = obtenerRecursos();
     recursos.forEach((recurso) => {
         if (recurso.categoriaId === id) {
@@ -860,7 +944,10 @@ function eliminarCategoria(id) {
         }
     });
     guardarRecursos(recursos);
-    guardarCategorias(obtenerCategorias().filter((item) => item.id !== id));
+    const categoriasActualizadas = categorias.filter((item) => item.id !== id).map((item) =>
+        item.parentId === id ? { ...item, parentId: '' } : item
+    );
+    guardarCategorias(categoriasActualizadas);
     cancelarEdicionCategoria();
     actualizarSelectoresCategorias();
     renderizarListaCategorias();
