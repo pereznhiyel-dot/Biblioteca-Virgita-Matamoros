@@ -21,7 +21,7 @@ const firebaseConfig = {
 };
 
 // Limita las rutas de la base de datos a las colecciones usadas por la aplicación.
-const COLECCIONES_PERMITIDAS = new Set(['resources', 'reviews', 'suggestions']);
+const COLECCIONES_PERMITIDAS = new Set(['resources', 'reviews', 'suggestions', 'categories']);
 // Inicializa Firebase y obtiene la instancia de Realtime Database.
 const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
