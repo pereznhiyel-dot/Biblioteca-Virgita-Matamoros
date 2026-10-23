@@ -49,7 +49,16 @@
 					<h2 class="section-title">Lecturas</h2>
 					<p>Libros digitales, manuales y otros textos.</p>
 				</div>
-				<button class="action-button" type="button" onclick="abrirFormularioRecurso('lecturas')"><re-icon icon="add" size="18" aria-hidden="true"></re-icon>Agregar lectura</button>
+				<div class="management-actions">
+					<button class="secondary-button" type="button" onclick="abrirGestionCategorias()">Administrar categorías</button>
+					<button class="action-button" type="button" onclick="abrirFormularioRecurso('lecturas')"><re-icon icon="add" size="18" aria-hidden="true"></re-icon>Agregar lectura</button>
+				</div>
+			</div>
+			<div class="category-filter">
+				<label for="filtro-categoria-lecturas">Filtrar por categoría</label>
+				<select id="filtro-categoria-lecturas" data-filtro-categoria="lecturas">
+					<option value="">Todas las categorías</option>
+				</select>
 			</div>
 			<div id="lista-lecturas" class="grid-cartas management-list"></div>
 		</section>
@@ -60,7 +69,16 @@
 					<h2 class="section-title">Videos</h2>
 					<p>Material audiovisual para las clases y el estudio.</p>
 				</div>
-				<button class="action-button" type="button" onclick="abrirFormularioRecurso('videos')"><re-icon icon="add" size="18" aria-hidden="true"></re-icon>Agregar video</button>
+				<div class="management-actions">
+					<button class="secondary-button" type="button" onclick="abrirGestionCategorias()">Administrar categorías</button>
+					<button class="action-button" type="button" onclick="abrirFormularioRecurso('videos')"><re-icon icon="add" size="18" aria-hidden="true"></re-icon>Agregar video</button>
+				</div>
+			</div>
+			<div class="category-filter">
+				<label for="filtro-categoria-videos">Filtrar por categoría</label>
+				<select id="filtro-categoria-videos" data-filtro-categoria="videos">
+					<option value="">Todas las categorías</option>
+				</select>
 			</div>
 			<div id="lista-videos" class="grid-yt management-list"></div>
 		</section>
@@ -101,8 +119,11 @@
 					<input id="recursoTitulo" type="text" maxlength="120" required>
 				</div>
 				<div class="form-group">
-					<label id="etiquetaCategoria" for="recursoCategoria">Categoría, autor o canal</label>
-					<input id="recursoCategoria" type="text" maxlength="80">
+					<label id="etiquetaCategoria" for="recursoCategoria">Categoría</label>
+					<select id="recursoCategoria">
+						<option value="">Sin categoría</option>
+					</select>
+					<p class="form-hint">Las categorías se administran desde las secciones de lecturas y videos.</p>
 				</div>
 				<div class="form-group">
 					<label for="recursoDescripcion">Descripción</label>
@@ -129,6 +150,32 @@
 					<button class="action-button" type="submit">Guardar recurso</button>
 				</div>
 			</form>
+		</section>
+	</div>
+
+	<div id="modalCategorias" class="modal" aria-hidden="true">
+		<section class="modal-content category-manager-modal" role="dialog" aria-modal="true" aria-labelledby="tituloModalCategorias">
+			<button class="close-modal" type="button" aria-label="Cerrar" onclick="cerrarGestionCategorias()">&times;</button>
+			<h2 id="tituloModalCategorias">Administrar categorías</h2>
+			<p class="form-hint">Las categorías organizan lecturas y videos. El icono es opcional; al editar, dejarlo vacío conserva el icono actual.</p>
+			<form id="formularioCategoria">
+				<input id="categoriaId" type="hidden">
+				<div class="form-group">
+					<label for="categoriaNombre">Nombre de la categoría</label>
+					<input id="categoriaNombre" type="text" maxlength="80" required>
+				</div>
+				<div class="form-group">
+					<label for="categoriaIcono">Icono (opcional)</label>
+					<input id="categoriaIcono" type="text" maxlength="40" placeholder="book-open">
+					<p class="form-hint">Escribe el nombre de un icono ReIcon, por ejemplo: book-open o flask.</p>
+				</div>
+				<p id="mensajeCategoria" class="form-message" aria-live="polite"></p>
+				<div class="resource-form-actions">
+					<button id="cancelarEdicionCategoria" class="secondary-button" type="button" onclick="cancelarEdicionCategoria()" hidden>Cancelar edición</button>
+					<button class="action-button" type="submit">Guardar categoría</button>
+				</div>
+			</form>
+			<div id="listaCategorias" class="category-manager-list"></div>
 		</section>
 	</div>
 
