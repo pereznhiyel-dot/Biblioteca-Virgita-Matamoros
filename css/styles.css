@@ -1014,6 +1014,16 @@ re-icon {
     overflow-wrap: anywhere;
 }
 
+.category-manager-item.is-subcategory {
+    margin-left: 1.5rem;
+    border-left: 3px solid var(--header-accent);
+}
+
+.category-parent-label {
+    color: var(--text-secondary);
+    font-weight: 400;
+}
+
 .category-manager-item .resource-actions {
     flex: 0 0 auto;
     margin: 0;
