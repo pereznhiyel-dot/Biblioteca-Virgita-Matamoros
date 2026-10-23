@@ -31,6 +31,14 @@
 
 Publica el contenido actualizado de `database.rules.json` en **Firebase Console → Realtime Database → Rules**. Las cuentas docentes deben seguir autorizadas en `docentesAutorizados`.
 
+## Videos desde Google Drive
+
+- El formulario docente permite elegir Google Drive como origen para videos, además de enlaces web, YouTube y Vimeo.
+- Los enlaces compartidos de archivos de video de Drive se muestran con el reproductor integrado de Google Drive.
+- Se valida que el enlace de Drive incluya un identificador de archivo y se guarda el origen del video para conservarlo al editar.
+- Se añadió la validación de `origenVideo` en las reglas de Realtime Database.
+- Para reproducirlo, el archivo de Drive debe tener permisos para que los estudiantes puedan verlo mediante el enlace.
+
 ## Archivos modificados
 
 - `estudiante-dashboard.html`
