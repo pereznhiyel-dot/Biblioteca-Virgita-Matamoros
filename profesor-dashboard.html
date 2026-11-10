@@ -156,35 +156,111 @@
 	<div id="modalCategorias" class="modal" aria-hidden="true">
 		<section class="modal-content category-manager-modal" role="dialog" aria-modal="true" aria-labelledby="tituloModalCategorias">
 			<button class="close-modal" type="button" aria-label="Cerrar" onclick="cerrarGestionCategorias()">&times;</button>
-			<h2 id="tituloModalCategorias">Administrar categorías</h2>
-			<p class="form-hint">Las categorías organizan lecturas y videos. El icono es opcional; al editar, dejarlo vacío conserva el icono actual.</p>
+			<div class="category-manager-heading">
+				<span class="category-manager-heading-icon"><re-icon icon="folder" size="24" aria-hidden="true"></re-icon></span>
+				<div>
+					<p class="eyebrow">Organiza el catálogo</p>
+					<h2 id="tituloModalCategorias">Crear y administrar categorías</h2>
+					<p>Ordena tus recursos con categorías y subcategorías fáciles de reconocer.</p>
+				</div>
+			</div>
 			<form id="formularioCategoria">
 				<input id="categoriaId" type="hidden">
-				<div class="form-group">
-					<label for="categoriaNombre">Nombre de la categoría</label>
-					<input id="categoriaNombre" type="text" maxlength="80" required>
+				<div class="category-form-fields">
+					<div class="form-group category-name-field">
+						<label for="categoriaNombre">Nombre de la categoría</label>
+						<input id="categoriaNombre" type="text" maxlength="80" placeholder="Ej. Ciencias" required>
+					</div>
+					<div class="form-group category-parent-field">
+						<label for="categoriaPadre">Categoría principal <span>(opcional)</span></label>
+						<select id="categoriaPadre">
+							<option value="">Ninguna: será una categoría principal</option>
+						</select>
+						<p class="form-hint">Elige una categoría existente para crear una subcategoría.</p>
+					</div>
+					<div class="form-group category-icon-field">
+						<label for="categoriaIcono">Icono</label>
+						<div class="category-icon-picker">
+							<span class="category-icon-preview"><re-icon id="categoriaIconoPreview" icon="folder" size="22" aria-hidden="true"></re-icon></span>
+							<select id="categoriaIcono" aria-label="Icono de la categoría">
+								<option value="">Sin icono</option>
+								<option value="book-open">Libro</option>
+								<option value="flask">Ciencias</option>
+								<option value="calculator">Matemáticas</option>
+								<option value="globe">Geografía</option>
+								<option value="history">Historia</option>
+								<option value="laptop">Tecnología</option>
+								<option value="gamepad">Juegos</option>
+								<option value="leaf">Naturaleza</option>
+								<option value="palette">Arte</option>
+								<option value="music">Música</option>
+								<option value="folder">Carpeta</option>
+								<option value="custom">Personalizado</option>
+							</select>
+						</div>
+						<input id="categoriaIconoPersonalizado" type="text" maxlength="40" placeholder="Nombre del icono, por ejemplo: microscope" aria-label="Nombre del icono personalizado" hidden>
+						<p class="form-hint">Escoge un icono o escribe uno de ReIcon.</p>
+					</div>
 				</div>
-				<div class="form-group">
-					<label for="categoriaPadre">Categoría principal</label>
-					<select id="categoriaPadre">
-						<option value="">Ninguna (categoría principal)</option>
-					</select>
-					<p class="form-hint">Selecciona una categoría principal para crear una subcategoría, por ejemplo: Estudios → Séptimo.</p>
+
+				<div class="category-subcategory-toggle-wrap" id="grupoActivarSubcategorias">
+					<label class="category-subcategory-toggle">
+						<input id="activarSubcategorias" type="checkbox" aria-controls="panelSubcategorias" aria-expanded="false">
+						<span class="category-toggle-track" aria-hidden="true"></span>
+						<span class="category-subcategory-toggle-copy"><strong>¿Agregar subcategorías?</strong><small>Actívalo para crear varias subcategorías de una vez.</small></span>
+					</label>
 				</div>
-				<div class="form-group">
-					<label for="categoriaIcono">Icono (opcional)</label>
-					<input id="categoriaIcono" type="text" maxlength="40" placeholder="book-open">
-					<p class="form-hint">Escribe el nombre de un icono ReIcon, por ejemplo: book-open o flask.</p>
-				</div>
+
+				<section id="panelSubcategorias" class="category-subcategories-panel" aria-labelledby="tituloSubcategorias" hidden>
+					<div class="category-subcategories-heading">
+						<div>
+							<h3 id="tituloSubcategorias">Subcategorías</h3>
+							<p id="ayudaSubcategorias">Agrega una o varias subcategorías para esta categoría.</p>
+						</div>
+						<button id="agregarFilaSubcategoria" class="secondary-button category-add-subcategory" type="button"><re-icon icon="add" size="18" aria-hidden="true"></re-icon>Agregar otra</button>
+					</div>
+					<div id="listaCamposSubcategorias" class="category-subcategory-fields"></div>
+				</section>
+
 				<p id="mensajeCategoria" class="form-message" aria-live="polite"></p>
-				<div class="resource-form-actions">
-					<button id="cancelarEdicionCategoria" class="secondary-button" type="button" onclick="cancelarEdicionCategoria()" hidden>Cancelar edición</button>
-					<button class="action-button" type="submit">Guardar categoría</button>
+				<div class="resource-form-actions category-form-actions">
+					<button id="btnCancelarEdicionCategoria" class="secondary-button" type="button" onclick="cancelarEdicionCategoria()" hidden>Cancelar edición</button>
+					<button class="action-button" type="submit"><re-icon icon="check" size="18" aria-hidden="true"></re-icon><span id="textoGuardarCategoria">Crear categoría</span></button>
 				</div>
 			</form>
+			<div class="category-list-heading"><h3>Categorías creadas</h3><span>Selecciona una para editarla</span></div>
 			<div id="listaCategorias" class="category-manager-list"></div>
 		</section>
 	</div>
+
+	<template id="plantillaCampoSubcategoria">
+		<div class="category-subcategory-row">
+			<div class="form-group category-subcategory-name">
+				<label>Nombre de la subcategoría</label>
+				<input type="text" maxlength="80" placeholder="Ej. Séptimo" data-nombre-subcategoria>
+			</div>
+			<div class="form-group category-subcategory-icon">
+				<label>Icono</label>
+				<div class="category-icon-picker">
+					<span class="category-icon-preview"><re-icon data-preview-icono icon="folder" size="20" aria-hidden="true"></re-icon></span>
+					<select data-icono-subcategoria aria-label="Icono de la subcategoría">
+						<option value="folder">Carpeta</option>
+						<option value="book-open">Libro</option>
+						<option value="flask">Ciencias</option>
+						<option value="calculator">Matemáticas</option>
+						<option value="globe">Geografía</option>
+						<option value="history">Historia</option>
+						<option value="laptop">Tecnología</option>
+						<option value="gamepad">Juegos</option>
+						<option value="leaf">Naturaleza</option>
+						<option value="palette">Arte</option>
+						<option value="music">Música</option>
+					</select>
+				</div>
+			</div>
+			<button class="delete-button category-remove-subcategory" type="button" data-quitar-subcategoria aria-label="Quitar subcategoría">&times;</button>
+		</div>
+	</template>
 
 	<script type="module" src="js/firebase.js"></script>
 	<script src="js/main.js"></script>
