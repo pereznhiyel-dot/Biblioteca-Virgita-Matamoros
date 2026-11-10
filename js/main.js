@@ -652,6 +652,26 @@ function inicializarGestionRecursos() {
     renderizarCatalogoDocente();
     renderizarCatalogoEstudiante();
 
+    const resumenCatalogo = document.getElementById('resumen-catalogo-estudiante');
+    if (resumenCatalogo) {
+        resumenCatalogo.addEventListener('click', (event) => {
+            const boton = event.target.closest('[data-ir-tipo]');
+            if (!boton) return;
+            const seccion = boton.dataset.irTipo;
+            const botonSeccion = document.querySelector(`.nav-tab[data-seccion="${seccion}"]`);
+            if (!botonSeccion) return;
+            cambiarPestana(seccion, botonSeccion);
+            if (boton.dataset.recursoId) {
+                requestAnimationFrame(() => {
+                    document.getElementById(`recurso-${boton.dataset.recursoId}`)?.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
+                });
+            }
+        });
+    }
+
     document.querySelectorAll('.management-list').forEach((lista) => {
         lista.addEventListener('click', (event) => {
             const boton = event.target.closest('[data-accion-recurso]');
@@ -805,6 +825,7 @@ function renderizarCatalogoDocente() {
 function renderizarCatalogoEstudiante() {
     const recursos = obtenerRecursos();
     actualizarSelectoresCategorias();
+    renderizarResumenCatalogoEstudiante(recursos);
     ['lecturas', 'videos', 'juegos'].forEach((tipo) => {
         const lista = document.getElementById(`lista-estudiante-${tipo}`);
         if (!lista) return;
@@ -819,15 +840,39 @@ function renderizarCatalogoEstudiante() {
             const opiniones = crearOpinionesHTML(recurso.id, true);
 
             if (tipo === 'videos') {
-                return `<article class="yt-card"><div class="video-player">${crearReproductorVideo(recurso.url, recurso.titulo)}</div><div class="yt-details">${etiqueta}<h3>${titulo}</h3><p class="yt-canal">${descripcion}</p>${opiniones}</div></article>`;
+                return `<article id="recurso-${escaparHTML(recurso.id)}" class="yt-card"><div class="video-player">${crearReproductorVideo(recurso.url, recurso.titulo)}</div><div class="yt-details">${etiqueta}<h3>${titulo}</h3><p class="yt-canal">${descripcion}</p>${opiniones}</div></article>`;
             }
 
             const esJuego = tipo === 'juegos';
             const icono = esJuego ? 'gamepad' : 'book-open';
             const textoAccion = esJuego ? 'Jugar ahora' : esEnlaceDrive(recurso.url) ? 'Abrir en Drive' : 'Abrir lectura';
-            return `<article class="card-libro"><img src="${imagen}" alt="Imagen de ${titulo}"><div class="card-libro-info">${etiqueta}<h3>${titulo}</h3><p>${descripcion || categoria}</p>${opiniones}<a class="btn-leer" href="${url}" target="_blank" rel="noopener noreferrer"><re-icon icon="${icono}" size="18" aria-hidden="true"></re-icon>${textoAccion}</a></div></article>`;
+            return `<article id="recurso-${escaparHTML(recurso.id)}" class="card-libro"><img src="${imagen}" alt="Imagen de ${titulo}"><div class="card-libro-info">${etiqueta}<h3>${titulo}</h3><p>${descripcion || categoria}</p>${opiniones}<a class="btn-leer" href="${url}" target="_blank" rel="noopener noreferrer"><re-icon icon="${icono}" size="18" aria-hidden="true"></re-icon>${textoAccion}</a></div></article>`;
         }).join('') : '<p class="empty-state">No hay recursos publicados en esta sección todavía.</p>';
     });
+}
+
+function renderizarResumenCatalogoEstudiante(recursos) {
+    const resumen = document.getElementById('resumen-catalogo-estudiante');
+    if (!resumen) return;
+
+    const secciones = [
+        { tipo: 'lecturas', titulo: 'Lecturas', icono: 'book-open', accion: 'Explorar lecturas' },
+        { tipo: 'videos', titulo: 'Videos', icono: 'video', accion: 'Ver reproductor' },
+        { tipo: 'juegos', titulo: 'Juegos', icono: 'gamepad', accion: 'Explorar juegos' }
+    ];
+
+    resumen.innerHTML = secciones.map(({ tipo, titulo, icono, accion }) => {
+        const recursosTipo = recursos.filter((recurso) => recurso.tipo === tipo);
+        const tarjetas = recursosTipo.map((recurso) => {
+            const tituloSeguro = escaparHTML(recurso.titulo);
+            const imagen = escaparHTML(urlSegura(recurso.imagen) || 'https://picsum.photos/640/420?grayscale');
+            const categoria = renderizarEtiquetaCategoria(recurso, tipo === 'juegos' ? 'juego' : '');
+            const descripcion = escaparHTML(recurso.descripcion || obtenerCategoriaRecurso(recurso).nombre || 'Recurso educativo');
+            return `<article class="student-preview-card"><div class="student-preview-image"><img src="${imagen}" alt="" loading="lazy"><span><re-icon icon="${icono}" size="20" aria-hidden="true"></re-icon></span></div><div class="student-preview-info">${categoria}<h4>${tituloSeguro}</h4><p>${descripcion}</p><button class="student-preview-link" type="button" data-ir-tipo="${tipo}" data-recurso-id="${escaparHTML(recurso.id)}"><re-icon icon="arrow-right" size="16" aria-hidden="true"></re-icon>${accion}</button></div></article>`;
+        }).join('');
+
+        return `<section class="student-overview-section" aria-labelledby="resumen-titulo-${tipo}"><div class="student-overview-section-heading"><h3 id="resumen-titulo-${tipo}"><re-icon icon="${icono}" size="20" aria-hidden="true"></re-icon>${titulo}</h3><span>${recursosTipo.length} ${recursosTipo.length === 1 ? 'recurso' : 'recursos'}</span></div><div class="student-preview-grid">${tarjetas || '<p class="empty-state">Todavía no hay recursos en esta sección.</p>'}</div></section>`;
+    }).join('');
 }
 
 function abrirGestionCategorias() {
@@ -1122,10 +1167,15 @@ function eliminarRecurso(id) {
 
 // Activa la pestaña solicitada y actualiza el estado visual de los botones de navegación.
 function cambiarPestana(nombrePestana, botonSeleccionado) {
+    const seccionSeleccionada = document.getElementById(`tab-${nombrePestana}`);
+    if (!seccionSeleccionada) return;
     document.querySelectorAll('.tab-content').forEach((tab) => tab.classList.remove('active'));
-    document.querySelectorAll('.nav-tab').forEach((boton) => boton.classList.remove('active'));
-    document.getElementById(`tab-${nombrePestana}`)?.classList.add('active');
-    if (botonSeleccionado) botonSeleccionado.classList.add('active');
+    document.querySelectorAll('.nav-tab').forEach((boton) => {
+        const estaSeleccionado = boton === botonSeleccionado;
+        boton.classList.toggle('active', estaSeleccionado);
+        boton.setAttribute('aria-pressed', String(estaSeleccionado));
+    });
+    seccionSeleccionada.classList.add('active');
 }
 
 // Abre el lector modal mostrando el título y la dirección del recurso.
