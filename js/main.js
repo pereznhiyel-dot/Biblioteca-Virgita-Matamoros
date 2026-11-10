@@ -701,6 +701,7 @@ function inicializarGestionRecursos() {
     const formularioCategoria = document.getElementById('formularioCategoria');
     if (formularioCategoria) {
         formularioCategoria.addEventListener('submit', guardarCategoriaDesdeFormulario);
+        inicializarControlesCategorias();
         const listaCategorias = document.getElementById('listaCategorias');
         listaCategorias.addEventListener('click', (event) => {
             const boton = event.target.closest('[data-accion-categoria]');
@@ -875,6 +876,63 @@ function renderizarResumenCatalogoEstudiante(recursos) {
     }).join('');
 }
 
+function inicializarControlesCategorias() {
+    const activarSubcategorias = document.getElementById('activarSubcategorias');
+    const panelSubcategorias = document.getElementById('panelSubcategorias');
+    const camposSubcategorias = document.getElementById('listaCamposSubcategorias');
+    const selectorIcono = document.getElementById('categoriaIcono');
+    const iconoPersonalizado = document.getElementById('categoriaIconoPersonalizado');
+    const iconoPreview = document.getElementById('categoriaIconoPreview');
+    const selectorPadre = document.getElementById('categoriaPadre');
+
+    document.getElementById('agregarFilaSubcategoria').addEventListener('click', agregarCampoSubcategoria);
+    activarSubcategorias.addEventListener('change', () => {
+        panelSubcategorias.hidden = !activarSubcategorias.checked;
+        activarSubcategorias.setAttribute('aria-expanded', String(activarSubcategorias.checked));
+        if (activarSubcategorias.checked && !camposSubcategorias.children.length) agregarCampoSubcategoria();
+        actualizarAyudaSubcategorias();
+    });
+    selectorPadre.addEventListener('change', actualizarAyudaSubcategorias);
+    selectorIcono.addEventListener('change', () => {
+        const esPersonalizado = selectorIcono.value === 'custom';
+        iconoPersonalizado.hidden = !esPersonalizado;
+        iconoPreview.setAttribute('icon', selectorIcono.value && !esPersonalizado ? selectorIcono.value : 'folder');
+        if (esPersonalizado) iconoPersonalizado.focus();
+    });
+    iconoPersonalizado.addEventListener('input', () => {
+        iconoPreview.setAttribute('icon', iconoPersonalizado.value.trim() || 'folder');
+    });
+    camposSubcategorias.addEventListener('change', (event) => {
+        const selector = event.target.closest('[data-icono-subcategoria]');
+        if (!selector) return;
+        selector.closest('.category-subcategory-row')
+            .querySelector('[data-preview-icono]')
+            .setAttribute('icon', selector.value);
+    });
+    camposSubcategorias.addEventListener('click', (event) => {
+        const botonQuitar = event.target.closest('[data-quitar-subcategoria]');
+        if (botonQuitar) botonQuitar.closest('.category-subcategory-row').remove();
+    });
+}
+
+function agregarCampoSubcategoria() {
+    const plantilla = document.getElementById('plantillaCampoSubcategoria');
+    const lista = document.getElementById('listaCamposSubcategorias');
+    if (!plantilla || !lista) return;
+    const fila = plantilla.content.firstElementChild.cloneNode(true);
+    lista.appendChild(fila);
+    fila.querySelector('[data-nombre-subcategoria]').focus();
+}
+
+function actualizarAyudaSubcategorias() {
+    const ayuda = document.getElementById('ayudaSubcategorias');
+    const selectorPadre = document.getElementById('categoriaPadre');
+    if (!ayuda || !selectorPadre) return;
+    ayuda.textContent = selectorPadre.value
+        ? 'La categoría y los nombres agregados se crearán dentro de la categoría principal seleccionada.'
+        : 'La categoría de arriba será la principal y los nombres agregados quedarán como sus subcategorías.';
+}
+
 function abrirGestionCategorias() {
     const modal = document.getElementById('modalCategorias');
     if (!modal) return;
@@ -917,20 +975,39 @@ function cancelarEdicionCategoria() {
     document.getElementById('categoriaId').value = '';
     document.getElementById('categoriaPadre').value = '';
     document.getElementById('mensajeCategoria').textContent = '';
-    document.getElementById('cancelarEdicionCategoria').hidden = true;
+    document.getElementById('btnCancelarEdicionCategoria').hidden = true;
+    document.getElementById('grupoActivarSubcategorias').hidden = false;
+    document.getElementById('activarSubcategorias').checked = false;
+    document.getElementById('activarSubcategorias').setAttribute('aria-expanded', 'false');
+    document.getElementById('panelSubcategorias').hidden = true;
+    document.getElementById('listaCamposSubcategorias').replaceChildren();
+    document.getElementById('categoriaIconoPersonalizado').hidden = true;
+    document.getElementById('categoriaIconoPreview').setAttribute('icon', 'folder');
+    document.getElementById('textoGuardarCategoria').textContent = 'Crear categoría';
     actualizarSelectoresCategorias();
+    actualizarAyudaSubcategorias();
 }
 
 function editarCategoria(id) {
     const categoria = obtenerCategorias().find((item) => item.id === id);
     if (!categoria) return;
+    cancelarEdicionCategoria();
     document.getElementById('categoriaId').value = categoria.id;
     actualizarSelectoresCategorias();
     document.getElementById('categoriaNombre').value = categoria.nombre;
     document.getElementById('categoriaPadre').value = categoria.parentId || '';
-    document.getElementById('categoriaIcono').value = categoria.icono || '';
+    const selectorIcono = document.getElementById('categoriaIcono');
+    const iconoPersonalizado = document.getElementById('categoriaIconoPersonalizado');
+    const iconosPredefinidos = [...selectorIcono.options].map((opcion) => opcion.value);
+    const iconoEsPredefinido = iconosPredefinidos.includes(categoria.icono || '');
+    selectorIcono.value = iconoEsPredefinido ? categoria.icono || '' : 'custom';
+    iconoPersonalizado.value = iconoEsPredefinido ? '' : categoria.icono || '';
+    iconoPersonalizado.hidden = iconoEsPredefinido;
+    document.getElementById('categoriaIconoPreview').setAttribute('icon', categoria.icono || 'folder');
     document.getElementById('mensajeCategoria').textContent = '';
-    document.getElementById('cancelarEdicionCategoria').hidden = false;
+    document.getElementById('btnCancelarEdicionCategoria').hidden = false;
+    document.getElementById('grupoActivarSubcategorias').hidden = true;
+    document.getElementById('textoGuardarCategoria').textContent = 'Guardar cambios';
     document.getElementById('categoriaNombre').focus();
 }
 
@@ -939,7 +1016,16 @@ function guardarCategoriaDesdeFormulario(event) {
     const id = document.getElementById('categoriaId').value;
     const nombre = document.getElementById('categoriaNombre').value.trim();
     const parentId = document.getElementById('categoriaPadre').value;
-    const iconoIngresado = document.getElementById('categoriaIcono').value.trim();
+    const selectorIcono = document.getElementById('categoriaIcono');
+    const iconoPersonalizado = document.getElementById('categoriaIconoPersonalizado').value.trim();
+    const iconoIngresado = selectorIcono.value === 'custom' ? iconoPersonalizado : selectorIcono.value;
+    const agregarSubcategorias = document.getElementById('activarSubcategorias').checked;
+    const camposSubcategorias = [...document.querySelectorAll('[data-nombre-subcategoria]')]
+        .map((campo) => ({
+            nombre: campo.value.trim(),
+            icono: campo.closest('.category-subcategory-row').querySelector('[data-icono-subcategoria]').value
+        }))
+        .filter((campo) => campo.nombre);
     const mensaje = document.getElementById('mensajeCategoria');
     const categorias = obtenerCategorias();
     const existente = categorias.find((categoria) => categoria.id === id);
@@ -948,8 +1034,16 @@ function guardarCategoriaDesdeFormulario(event) {
         mensaje.textContent = 'Escribe el nombre de la categoría.';
         return;
     }
+    if (selectorIcono.value === 'custom' && !iconoIngresado) {
+        mensaje.textContent = 'Escribe el nombre del icono personalizado.';
+        return;
+    }
     if (iconoIngresado && !/^[a-z0-9-]+$/i.test(iconoIngresado)) {
         mensaje.textContent = 'El icono solo puede contener letras, números y guiones.';
+        return;
+    }
+    if (agregarSubcategorias && !camposSubcategorias.length) {
+        mensaje.textContent = 'Agrega al menos una subcategoría o desactiva esta opción.';
         return;
     }
     if (parentId && !categorias.some((categoria) => categoria.id === parentId && !categoria.parentId)) {
@@ -960,14 +1054,20 @@ function guardarCategoriaDesdeFormulario(event) {
         mensaje.textContent = 'Una categoría no puede ser subcategoría de sí misma o de una categoría descendiente.';
         return;
     }
-    if (!existente?.parentId && categorias.some((categoria) => categoria.parentId === id) && parentId) {
+    if (existente && !existente.parentId && categorias.some((categoria) => categoria.parentId === id) && parentId) {
         mensaje.textContent = 'Una categoría que ya tiene subcategorías no puede convertirse en subcategoría.';
         return;
     }
-    if (categorias.some((categoria) =>
-        categoria.id !== id && categoria.nombre.trim().toLocaleLowerCase() === nombre.toLocaleLowerCase()
-    )) {
-        mensaje.textContent = 'Ya existe una categoría con ese nombre.';
+    const nombresNuevos = [nombre, ...camposSubcategorias.map((campo) => campo.nombre)];
+    const nombresNormalizados = nombresNuevos.map((nombreNuevo) => nombreNuevo.toLocaleLowerCase());
+    if (new Set(nombresNormalizados).size !== nombresNormalizados.length) {
+        mensaje.textContent = 'No repitas el nombre de una categoría o subcategoría.';
+        return;
+    }
+    if (nombresNuevos.some((nombreNuevo) => categorias.some((categoria) =>
+        categoria.id !== id && categoria.nombre.trim().toLocaleLowerCase() === nombreNuevo.toLocaleLowerCase()
+    ))) {
+        mensaje.textContent = 'Ya existe una categoría o subcategoría con ese nombre.';
         return;
     }
 
@@ -986,6 +1086,17 @@ function guardarCategoriaDesdeFormulario(event) {
         categorias[categorias.indexOf(existente)] = categoria;
     } else {
         categorias.push(categoria);
+        if (agregarSubcategorias) {
+            const parentIdSubcategorias = parentId || categoria.id;
+            camposSubcategorias.forEach((campo) => {
+                categorias.push({
+                    id: crearIdCategoria(campo.nombre),
+                    nombre: campo.nombre,
+                    icono: campo.icono,
+                    parentId: parentIdSubcategorias
+                });
+            });
+        }
     }
     guardarCategorias(categorias);
     actualizarSelectoresCategorias();
