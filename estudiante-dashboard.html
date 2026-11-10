@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="css/styles.css">
     <script src="https://unpkg.com/reicon/cdn/reicon.js" defer></script>
 </head>
-<body>
+<body class="student-dashboard">
 
     <!-- Header / Banner superior del panel -->
     <header class="biblioteca-header">
@@ -27,12 +27,12 @@
     </header>
 
     <!-- Menú Banner de Navegación entre secciones -->
-    <nav class="nav-banner">
+    <nav class="nav-banner" aria-label="Secciones de la biblioteca">
         <div class="nav-container">
-            <button class="nav-tab active" onclick="cambiarPestana('principal', this)"><re-icon icon="home" size="20" aria-hidden="true"></re-icon>Principal</button>
-            <button class="nav-tab" onclick="cambiarPestana('lecturas', this)"><re-icon icon="book-open" size="20" aria-hidden="true"></re-icon>Lecturas</button>
-            <button class="nav-tab" onclick="cambiarPestana('videos', this)"><re-icon icon="video" size="20" aria-hidden="true"></re-icon>Videos</button>
-            <button class="nav-tab" onclick="cambiarPestana('juegos', this)"><re-icon icon="gamepad" size="20" aria-hidden="true"></re-icon>Juegos</button>
+            <button class="nav-tab active" type="button" data-seccion="principal" aria-pressed="true" onclick="cambiarPestana('principal', this)"><re-icon icon="home" size="20" aria-hidden="true"></re-icon>Principal</button>
+            <button class="nav-tab" type="button" data-seccion="lecturas" aria-pressed="false" onclick="cambiarPestana('lecturas', this)"><re-icon icon="book-open" size="20" aria-hidden="true"></re-icon>Lecturas</button>
+            <button class="nav-tab" type="button" data-seccion="videos" aria-pressed="false" onclick="cambiarPestana('videos', this)"><re-icon icon="video" size="20" aria-hidden="true"></re-icon>Videos</button>
+            <button class="nav-tab" type="button" data-seccion="juegos" aria-pressed="false" onclick="cambiarPestana('juegos', this)"><re-icon icon="gamepad" size="20" aria-hidden="true"></re-icon>Juegos</button>
         </div>
     </nav>
 
@@ -42,6 +42,15 @@
 
         <!-- ================= PESTAÑA 1: PRINCIPAL ================= -->
         <div id="tab-principal" class="tab-content active">
+            <section class="student-library-overview" aria-labelledby="tituloBibliotecaEstudiante">
+                <div class="student-overview-heading">
+                    <p class="eyebrow"><re-icon icon="library" size="18" aria-hidden="true"></re-icon>Biblioteca digital</p>
+                    <h2 id="tituloBibliotecaEstudiante">Explora y aprende</h2>
+                    <p>Encuentra lecturas, videos y juegos educativos en un solo lugar.</p>
+                </div>
+                <div id="resumen-catalogo-estudiante" class="student-overview-sections"></div>
+            </section>
+
             <!-- Sección Misión, Visión y Quiénes Somos -->
             <section class="info-grid">
                 <!-- Tarjeta Quiénes Somos -->
