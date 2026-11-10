@@ -24,6 +24,7 @@ const COLECCIONES_FIREBASE = {
 const IDS_FIREBASE = { resources: new Set(), reviews: new Set(), suggestions: new Set(), categories: new Set() };
 let firebaseDisponible = false;
 let sincronizandoFirebase = false;
+let activadorGestionCategorias = null;
 
 // Configura formularios y eventos cuando el documento ya tiene sus elementos HTML.
 document.addEventListener('DOMContentLoaded', () => {
@@ -702,6 +703,10 @@ function inicializarGestionRecursos() {
     if (formularioCategoria) {
         formularioCategoria.addEventListener('submit', guardarCategoriaDesdeFormulario);
         inicializarControlesCategorias();
+        document.querySelectorAll('[data-abrir-gestion-categorias]').forEach((boton) => {
+            boton.addEventListener('click', () => abrirGestionCategorias(boton));
+        });
+        document.getElementById('cerrarModalCategorias').addEventListener('click', cerrarGestionCategorias);
         const listaCategorias = document.getElementById('listaCategorias');
         listaCategorias.addEventListener('click', (event) => {
             const boton = event.target.closest('[data-accion-categoria]');
@@ -933,14 +938,15 @@ function actualizarAyudaSubcategorias() {
         : 'La categoría de arriba será la principal y los nombres agregados quedarán como sus subcategorías.';
 }
 
-function abrirGestionCategorias() {
+function abrirGestionCategorias(botonActivador = null) {
     const modal = document.getElementById('modalCategorias');
     if (!modal) return;
+    activadorGestionCategorias = botonActivador || document.activeElement;
     cancelarEdicionCategoria();
     renderizarListaCategorias();
     modal.classList.add('active');
     modal.setAttribute('aria-hidden', 'false');
-    document.getElementById('categoriaNombre').focus();
+    document.getElementById('categoriaNombre').focus({ preventScroll: true });
 }
 
 function cerrarGestionCategorias() {
@@ -948,6 +954,8 @@ function cerrarGestionCategorias() {
     if (!modal) return;
     modal.classList.remove('active');
     modal.setAttribute('aria-hidden', 'true');
+    activadorGestionCategorias?.focus({ preventScroll: true });
+    activadorGestionCategorias = null;
 }
 
 function renderizarListaCategorias() {
