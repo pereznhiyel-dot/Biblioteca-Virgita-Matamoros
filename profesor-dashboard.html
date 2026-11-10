@@ -50,7 +50,7 @@
 					<p>Libros digitales, manuales y otros textos.</p>
 				</div>
 				<div class="management-actions">
-					<button class="secondary-button" type="button" onclick="abrirGestionCategorias()">Administrar categorías</button>
+					<button class="secondary-button" type="button" data-abrir-gestion-categorias>Administrar categorías</button>
 					<button class="action-button" type="button" onclick="abrirFormularioRecurso('lecturas')"><re-icon icon="add" size="18" aria-hidden="true"></re-icon>Agregar lectura</button>
 				</div>
 			</div>
@@ -70,7 +70,7 @@
 					<p>Material audiovisual para las clases y el estudio.</p>
 				</div>
 				<div class="management-actions">
-					<button class="secondary-button" type="button" onclick="abrirGestionCategorias()">Administrar categorías</button>
+					<button class="secondary-button" type="button" data-abrir-gestion-categorias>Administrar categorías</button>
 					<button class="action-button" type="button" onclick="abrirFormularioRecurso('videos')"><re-icon icon="add" size="18" aria-hidden="true"></re-icon>Agregar video</button>
 				</div>
 			</div>
@@ -155,7 +155,7 @@
 
 	<div id="modalCategorias" class="modal" aria-hidden="true">
 		<section class="modal-content category-manager-modal" role="dialog" aria-modal="true" aria-labelledby="tituloModalCategorias">
-			<button class="close-modal" type="button" aria-label="Cerrar" onclick="cerrarGestionCategorias()">&times;</button>
+			<button id="cerrarModalCategorias" class="close-modal" type="button" aria-label="Cerrar">&times;</button>
 			<div class="category-manager-heading">
 				<span class="category-manager-heading-icon"><re-icon icon="folder" size="24" aria-hidden="true"></re-icon></span>
 				<div>
