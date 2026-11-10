@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biblioteca Digital - CTP Guácimo</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://unpkg.com/reicon/cdn/reicon.js" defer></script>
+</head>
+<body>
+
+    <!-- Banner Superior y Selector de Ingreso -->
+    <header class="biblioteca-header">
+        <div class="banner-frase">
+            <h1>"Leer no enyena pero no engorga"</h1>
+        </div>
+        <div class="menu-ingreso-container">
+            <details class="role-menu">
+                <summary>
+                    <re-icon icon="user" size="19" aria-hidden="true"></re-icon>
+                    <span>Elegir portal</span>
+                    <re-icon class="role-menu-chevron" icon="chevron-down" size="18" aria-hidden="true"></re-icon>
+                </summary>
+                <div class="role-menu-options">
+                    <a class="role-option" href="login-estudiante.html">
+                        <span class="role-option-icon"><re-icon icon="book-open" size="21" aria-hidden="true"></re-icon></span>
+                        <span><strong>Estudiante</strong><small>Ir al portal estudiantil</small></span>
+                        <re-icon class="role-option-arrow" icon="arrow-right" size="18" aria-hidden="true"></re-icon>
+                    </a>
+                    <a class="role-option" href="inicio-secion-profesores.html">
+                        <span class="role-option-icon teacher"><re-icon icon="library" size="21" aria-hidden="true"></re-icon></span>
+                        <span><strong>Profesor</strong><small>Administrar la biblioteca</small></span>
+                        <re-icon class="role-option-arrow" icon="arrow-right" size="18" aria-hidden="true"></re-icon>
+                    </a>
+                </div>
+            </details>
+        </div>
+    </header>
+
+    <!-- Contenido Principal -->
+    <main class="biblioteca-main">
+        <section class="titulo-principal">
+            <h2>¿Qué vas a ver en esta página?</h2>
+            <p class="subtitulo">Explora nuestro catálogo de recursos interactivos para el aprendizaje</p>
+        </section>
+
+        <!-- Sección 1: Lecturas -->
+        <section class="seccion-item">
+            <div class="numero-titulo">
+                <span class="numero">1</span>
+                <h3>Lecturas</h3>
+            </div>
+            <div class="imagenes-grid">
+                <div class="card-recurso" onclick="abrirModal('Don Quijote de la Mancha', 'Lectura clásica disponible para lectura digital en la biblioteca.')">
+                    <div class="img-container">
+                        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTVZdZzxxDpkLVk3_42ecOcPgxmoInxrIOiwpJPAWHiJXK18NywqAqIBpU&s=10" alt="Libro Clásico">
+                    </div>
+                    <div class="card-info">
+                        <h4>Literatura Clásica</h4>
+                        <p>Obras y novelas recomendadas</p>
+                    </div>
+                </div>
+                <div class="card-recurso" onclick="abrirModal('Manual Técnico', 'Guías y manuales de especialidad del CTP Guácimo.')">
+                    <div class="img-container">
+                        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQraGNeFsi0fbp0SbOFWyCYaYbVzDRXE6brKvYBFFINjv4uEmPJE5vsCYU&s=10" alt="Libro Técnico">
+                    </div>
+                    <div class="card-info">
+                        <h4>Revistas Técnicas</h4>
+                        <p>Artículos de especialidades</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sección 2: Videos -->
+        <section class="seccion-item">
+            <div class="numero-titulo">
+                <span class="numero">2</span>
+                <h3>Videos</h3>
+            </div>
+            <div class="imagenes-grid">
+                <div class="card-recurso" onclick="abrirModal('Tutorial de Robótica', 'Material audiovisual educativo para clases técnicas.')">
+                    <div class="img-container">
+                        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRU6w5PUqwveaIo39yKOm_M5avLN2FlD0F1G55Nhqcv_3vmO0e2HHJdcywt&s=10" alt="Video Educativo">
+                    </div>
+                    <div class="card-info">
+                        <h4>Tutoriales Educativos</h4>
+                        <p>Aprende paso a paso</p>
+                    </div>
+                </div>
+                <div class="card-recurso" onclick="abrirModal('Documentales Históricos', 'Colección audiovisual de historia y ciencia.')">
+                    <div class="img-container">
+                        <img src="https://cnbl-cdn.bamgrid.com/assets/1f510a61dba6bb7e102cdae4da72a60fc044a43af87eb64b67a686f1bcc5adb2/original" alt="Documental">
+                    </div>
+                    <div class="card-info">
+                        <h4>Documentales</h4>
+                        <p>Ciencia, historia y cultura</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sección 3: Juegos -->
+        <section class="seccion-item">
+            <div class="numero-titulo">
+                <span class="numero">3</span>
+                <h3>Juegos</h3>
+            </div>
+            <div class="imagenes-grid">
+                <div class="card-recurso" onclick="abrirModal('Ajedrez Interactivo', 'Desarrolla el pensamiento lógico con ajedrez en línea.')">
+                    <div class="img-container">
+                        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT654cNStucrUNGmJyITg3Jpwne26oS6XLabsAq83UytzfBBc9MB9LFHttH&s=10" alt="Juego de Estrategia">
+                    </div>
+                    <div class="card-info">
+                        <h4>Juegos de Estrategia</h4>
+                        <p>Ajedrez y acertijos lógicos</p>
+                    </div>
+                </div>
+                <div class="card-recurso" onclick="abrirModal('Trivia de Conocimiento', 'Pon a prueba tus conocimientos generales.')">
+                    <div class="img-container">
+                        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRPPKLKaB_antFIpKFSkLR4j4lvadz-0wFebFK3yxxr6SRyDLdJG0VF_uRe&s=10" alt="Trivia">
+                    </div>
+                    <div class="card-info">
+                        <h4>Trivias e Interacción</h4>
+                        <p>Aprende jugando</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal Emergente de Vista Previa -->
+    <div id="modalRecurso" class="modal" aria-hidden="true">
+        <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modalTitulo">
+            <button class="close-modal" type="button" aria-label="Cerrar" onclick="cerrarModal()">&times;</button>
+            <h3 id="modalTitulo">Título</h3>
+            <p id="modalDesc" style="margin-top: 0.8rem; color: var(--text-secondary);"></p>
+            <p style="margin-top: 1.2rem; font-size: 0.85rem; color: var(--accent-color); font-weight: bold;">
+                * Inicia sesión como Estudiante o Profesor para acceder al contenido completo.
+            </p>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceso Estudiantes - CTP Guácimo</title>
+    <!-- Vinculación de los estilos globales de la página -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="login-body">
+
+    <!-- Tarjeta central del formulario de inicio de sesión -->
+    <div class="login-card">
+        <h2>Biblioteca CTP Guácimo</h2>
+        <span class="login-badge">Ingreso Estudiantes</span>
+        
+        <!-- Formulario que solicita solo Nombre y Sección -->
+        <form id="formLoginEstudiante">
+            <!-- Campo para el Nombre Completo -->
+            <div class="form-group">
+                <label for="nombreEstudiante">Nombre Completo:</label>
+                <input type="text" id="nombreEstudiante" placeholder="Ej. María Rodríguez" required>
+            </div>
+
+            <!-- Campo para la Sección (ej. 11-4) -->
+            <div class="form-group">
+                <label for="seccionEstudiante">Sección:</label>
+                <input type="text" id="seccionEstudiante" placeholder="Ej. 11-4" pattern="[0-9]{1,2}-[0-9]{1,2}" title="Formato requerido: número-número (Ejemplo: 11-4)" required>
+            </div>
+
+            <!-- Botón para enviar e ingresar -->
+            <button type="submit" class="btn-submit">Ingresar a la Biblioteca</button>
+        </form>
+        
+        <!-- Enlace para regresar al Inicio -->
+        <a href="index.html" class="back-link">← Volver al inicio</a>
+    </div>
+
+    <!-- Archivo ejecutable de JavaScript -->
+    <script src="js/main.js"></script>
+</body>
+</html>
